@@ -189,7 +189,7 @@ function openModalCaixaDet(i){
   document.getElementById('modalCaixaDet').classList.add('open')
 }
 function closeModalCaixaDet(){document.getElementById('modalCaixaDet').classList.remove('open')}
-document.getElementById('modalCaixaDet').addEventListener('click',e=>{if(e.target===document.getElementById('modalCaixaDet'))closeModalCaixaDet()})
+document.getElementById('modalCaixaDet')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalCaixaDet'))closeModalCaixaDet()})
 
 /* ══ FOTO DE PRODUTO ══ */
 
