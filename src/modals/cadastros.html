@@ -1,0 +1,310 @@
+<!-- ═══════════════════════════════════════════════════════════
+     MODAIS DE CADASTRO — ASSENT v1.2
+     Substitui os form-section fixos nas páginas por modais
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- ══ MODAL: NOVO CLIENTE ══ -->
+<div class="modal-overlay" id="modalNovoCliente">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">👤 Novo cliente</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovoCliente')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-cNome">
+        <label>Nome <span style="color:var(--red)">*</span></label>
+        <input id="clienteNome" placeholder="Nome completo">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group" id="fg-cTel">
+        <label>Telefone <span style="color:var(--red)">*</span></label>
+        <input id="clienteTelefone" placeholder="(00) 00000-0000">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group" id="fg-cCPF">
+        <label>CPF</label>
+        <input id="clienteCPF" placeholder="Somente 11 números" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
+        <span class="field-error">CPF deve ter exatamente 11 dígitos</span>
+      </div>
+      <div class="form-group">
+        <label>Instagram</label>
+        <input id="clienteInstagram" placeholder="@usuario">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Endereço</label>
+        <input id="clienteEndereco" placeholder="Rua, número, bairro, cidade…">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoCliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addCliente()">＋ Salvar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NOVO PRODUTO ══ -->
+<div class="modal-overlay" id="modalNovoProduto">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">📦 Novo produto</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovoProduto')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-pNome" style="grid-column:1/-1">
+        <label>Nome <span style="color:var(--red)">*</span></label>
+        <input id="produtoNome" placeholder="Nome do produto">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group">
+        <label>Preço (R$)</label>
+        <input id="produtoPreco" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01" oninput="calcMargem('preco')">
+      </div>
+      <div class="form-group">
+        <label>Custo (R$)</label>
+        <input id="produtoCusto" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01" oninput="calcMargem('custo')">
+      </div>
+    </div>
+
+    <!-- Calculadora de margem -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin:14px 0">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🧮 Calculadora de margem</div>
+      <div class="margem-calc-row">
+        <div>
+          <label style="font-size:12px">Custo (R$)</label>
+          <input id="calcCusto" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01" oninput="calcMargemFromCalc('custo')" style="font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px">Margem (%)</label>
+          <input id="calcMargem" type="number" inputmode="decimal" placeholder="ex: 40" min="0" max="999" step="0.1" oninput="calcMargemFromCalc('margem')" style="font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px">Preço sugerido</label>
+          <input id="calcPreco" type="number" inputmode="decimal" placeholder="calculado" min="0" step="0.01" oninput="calcMargemFromCalc('preco')" style="font-size:13px;color:var(--accent)">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Preencha dois campos — o terceiro é calculado automaticamente.</div>
+      <button type="button" class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="aplicarCalcMargem()">↑ Aplicar ao produto</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Estoque inicial</label>
+        <input id="produtoEstoque" type="number" inputmode="numeric" placeholder="0" min="0" step="1">
+      </div>
+      <div class="form-group">
+        <label>Foto (opcional)</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="novoProdFotoPreview" class="prod-foto-preview">📦</div>
+          <div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('novoProdFotoInput').click()">📷 Escolher</button>
+            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="limparNovoProdFoto()">✕ Remover</button>
+          </div>
+          <input type="file" id="novoProdFotoInput" accept="image/*" style="display:none" onchange="handleNovoProdFoto(this)">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoProduto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addProduto()">＋ Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NOVO SERVIÇO ══ -->
+<div class="modal-overlay" id="modalNovoServico">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">🎯 Novo serviço</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovoServico')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-sNome" style="grid-column:1/-1">
+        <label>Nome <span style="color:var(--red)">*</span></label>
+        <input id="servicoNome" placeholder="Ex: Ensaio fotográfico, Consultoria…">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group">
+        <label>Preço (R$)</label>
+        <input id="servicoPreco" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Custo estimado (R$)</label>
+        <input id="servicoCusto" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Categoria</label>
+        <div style="display:flex;gap:6px">
+          <div class="cliente-search-wrap" style="flex:1" id="servicoCatWrap">
+            <input id="servicoCategoriaSearch" placeholder="Selecionar ou digitar…" autocomplete="off"
+              oninput="onCatSearch(this.value)"
+              onfocus="abrirCatDropdown()"
+              onblur="fecharCatDropdown()"
+              style="width:100%">
+            <div class="cliente-search-dropdown" id="catDropdown" style="display:none"></div>
+            <input type="hidden" id="servicoCategoria">
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="adicionarCategoria()" title="Nova categoria" style="flex-shrink:0;padding:0 10px;font-size:16px">＋</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openModalGerenciarCategorias()" title="Gerenciar categorias" style="flex-shrink:0;padding:0 10px;font-size:14px">⚙️</button>
+        </div>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Descrição</label>
+        <input id="servicoDescricao" placeholder="Breve descrição do serviço (opcional)">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoServico')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addServico()">＋ Salvar serviço</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NOVO VENDEDOR ══ -->
+<div class="modal-overlay" id="modalNovoVendedor">
+  <div class="modal-box" style="max-width:500px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">👤 Novo vendedor</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovoVendedor')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-vNome" style="grid-column:1/-1">
+        <label>Nome <span style="color:var(--red)">*</span></label>
+        <input id="vendedorNome" placeholder="Nome do vendedor">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input id="vendedorTel" placeholder="(00) 00000-0000">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="vendedorEmail" type="email" placeholder="vendedor@empresa.com">
+      </div>
+      <div class="form-group">
+        <label>Comissão (%)</label>
+        <input id="vendedorComissao" type="number" inputmode="decimal" placeholder="Ex: 5" min="0" max="100" step="0.1">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Observação</label>
+        <input id="vendedorObs" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoVendedor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addVendedor()">＋ Salvar vendedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NOVO FORNECEDOR ══ -->
+<div class="modal-overlay" id="modalNovoFornecedor">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">🏭 Novo fornecedor</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovoFornecedor')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-fNome" style="grid-column:1/-1">
+        <label>Nome / Razão social <span style="color:var(--red)">*</span></label>
+        <input id="fornNome" placeholder="Nome do fornecedor">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input id="fornTel" placeholder="(00) 00000-0000">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="fornEmail" type="email" placeholder="contato@empresa.com">
+      </div>
+      <div class="form-group">
+        <label>CPF / CNPJ</label>
+        <input id="fornDoc" placeholder="Documento">
+      </div>
+      <div class="form-group">
+        <label>Forma de pagamento</label>
+        <select id="fornFormaPgto">
+          <option value="">— Não definido —</option>
+          <option value="Boleto">📄 Boleto</option>
+          <option value="Pix">📲 Pix</option>
+          <option value="Transferência">🏦 Transferência</option>
+          <option value="Cartão">💳 Cartão</option>
+          <option value="Dinheiro">💵 Dinheiro</option>
+          <option value="Crédito 30/60/90">📅 Crédito 30/60/90</option>
+          <option value="Outro">🔄 Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Prazo de pagamento</label>
+        <input id="fornPrazo" placeholder="Ex: 30 dias, à vista, 15/30/45…">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Observação</label>
+        <input id="fornObs" placeholder="Produtos fornecidos, condições de pagamento…">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoFornecedor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addFornecedor()">＋ Salvar fornecedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NOVA DESPESA ══ -->
+<div class="modal-overlay" id="modalNovaDespesa">
+  <div class="modal-box" style="max-width:540px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">📉 Nova despesa</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNovaDespesa')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-dNome" style="grid-column:1/-1">
+        <label>Descrição <span style="color:var(--red)">*</span></label>
+        <input id="despesaNome" placeholder="Ex: Aluguel, energia elétrica…">
+        <span class="field-error">Campo obrigatório</span>
+      </div>
+      <div class="form-group" id="fg-dValor">
+        <label>Valor (R$) <span style="color:var(--red)">*</span></label>
+        <input id="despesaValor" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01">
+        <span class="field-error">Informe um valor</span>
+      </div>
+      <div class="form-group">
+        <label>Vencimento <span style="color:var(--red)">*</span></label>
+        <input id="despesaVenc" type="date">
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="despesaCategoria">
+          <option value="Fixo">🏠 Fixo (aluguel, energia…)</option>
+          <option value="Variável">📊 Variável</option>
+          <option value="Fornecedor">🏭 Fornecedor</option>
+          <option value="Pessoal">👤 Pessoal / Retirada</option>
+          <option value="Imposto">🏛️ Imposto / Taxa</option>
+          <option value="Outro">🔄 Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fornecedor (opcional)</label>
+        <select id="despesaFornecedor"><option value="">— Nenhum —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Recorrente</label>
+        <select id="despesaRecorrente">
+          <option value="">Não recorrente</option>
+          <option value="mensal">Mensal</option>
+          <option value="semanal">Semanal</option>
+          <option value="anual">Anual</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Observação</label>
+        <input id="despesaObs" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovaDespesa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addDespesa()">＋ Registrar despesa</button>
+    </div>
+  </div>
+</div>

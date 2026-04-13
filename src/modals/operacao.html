@@ -1,0 +1,317 @@
+<!-- ══ MODAL: HISTÓRICO DO CLIENTE ══ -->
+<div class="modal-overlay" id="modalClienteHist">
+  <div class="modal-box" style="max-width:580px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:20px;font-weight:700" id="chNome"></div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px" id="chSub"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="imprimirHistoricoCliente()" title="Imprimir histórico">🖨️ Imprimir</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeClienteHist()">✕ Fechar</button>
+    </div>
+    <!-- Cards de resumo -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px" id="chCards"></div>
+    <!-- Filtro de período -->
+    <div class="dash-filter-bar" style="margin-bottom:14px" id="chFiltroBar">
+      <span class="dash-filter-label">Período:</span>
+      <button class="filter-btn active" onclick="setChPeriod('todos',this)">Tudo</button>
+      <button class="filter-btn" onclick="setChPeriod('hoje',this)">Hoje</button>
+      <button class="filter-btn" onclick="setChPeriod('7',this)">7 dias</button>
+      <button class="filter-btn" onclick="setChPeriod('30',this)">30 dias</button>
+      <button class="filter-btn" onclick="setChPeriod('mes',this)">Este mês</button>
+    </div>
+    <!-- Lista de compras -->
+    <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px">Histórico de compras</div>
+    <div id="chLista" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDITAR PRODUTO ══ -->
+<div class="modal-overlay" id="modalEditProduto">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">Editar Produto</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditProduto()">✕ Fechar</button>
+    </div>
+    <!-- Foto -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--surface3);border-radius:var(--radius);border:1px solid var(--border2)">
+      <div id="epFotoPreview" class="prod-foto-preview" style="width:80px;height:80px;border-radius:var(--radius);font-size:32px">📦</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px" id="epFotoNome"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('epFotoInput').click()">📷 Trocar foto</button>
+          <button class="btn btn-ghost btn-sm" id="epFotoRemoverBtn" onclick="epRemoverFoto()" style="display:none">✕ Remover</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">PNG, JPG ou SVG · Máx. 500kb</div>
+      </div>
+      <input type="file" id="epFotoInput" accept="image/*" style="display:none" onchange="epHandleFoto(this)">
+    </div>
+    <!-- Campos -->
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Nome <span style="color:var(--red)">*</span></label>
+        <input id="epNome" placeholder="Nome do produto">
+      </div>
+      <div class="form-group">
+        <label>Preço (R$)</label>
+        <input id="epPreco" type="number" inputmode="decimal" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Custo (R$)</label>
+        <input id="epCusto" type="number" inputmode="decimal" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Estoque</label>
+        <input id="epEstoque" type="number" inputmode="numeric" min="0" step="1">
+      </div>
+    </div>
+    <!-- Margem preview -->
+    <div id="epMargemPreview" style="background:var(--surface3);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;display:flex;gap:20px;flex-wrap:wrap">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditProduto()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarEditProduto()">✔ Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALHE DESPESA ══ -->
+<div class="modal-overlay" id="modalDespesaDet">
+  <div class="modal-box" style="max-width:480px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:18px;font-weight:700" id="ddNome"></div>
+        <div style="margin-top:6px" id="ddStatusBadge"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModalDespesaDet()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px" id="ddCards"></div>
+    <div id="ddExtras" style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;font-size:13px;line-height:2"></div>
+    <div class="modal-actions" style="margin-top:16px" id="ddAcoes"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDITAR DESPESA ══ -->
+<div class="modal-overlay" id="modalEditDespesa">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">Editar despesa</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditDespesa()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Descrição <span style="color:var(--red)">*</span></label>
+        <input id="edNome" placeholder="Descrição da despesa">
+      </div>
+      <div class="form-group">
+        <label>Valor (R$)</label>
+        <input id="edValor" type="number" inputmode="decimal" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Vencimento</label>
+        <input id="edVenc" type="date">
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="edCategoria">
+          <option value="Fixo">🏠 Fixo</option>
+          <option value="Variável">📊 Variável</option>
+          <option value="Fornecedor">🏭 Fornecedor</option>
+          <option value="Pessoal">👤 Pessoal</option>
+          <option value="Imposto">🏛️ Imposto / Taxa</option>
+          <option value="Outro">🔄 Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fornecedor</label>
+        <select id="edFornecedor"><option value="">— Nenhum —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Recorrente</label>
+        <select id="edRecorrente">
+          <option value="">Não recorrente</option>
+          <option value="mensal">Mensal</option>
+          <option value="semanal">Semanal</option>
+          <option value="anual">Anual</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Observação</label>
+        <input id="edObs" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeEditDespesa()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarEditDespesa()">✔ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDITAR FORNECEDOR ══ -->
+<div class="modal-overlay" id="modalEditForn">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:700">Editar fornecedor</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditForn()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Nome / Razão social <span style="color:var(--red)">*</span></label>
+        <input id="efNome" placeholder="Nome do fornecedor">
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <input id="efTel" placeholder="(00) 00000-0000">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="efEmail" type="email">
+      </div>
+      <div class="form-group">
+        <label>CPF / CNPJ</label>
+        <input id="efDoc">
+      </div>
+      <div class="form-group">
+        <label>Forma de pagamento</label>
+        <select id="efFormaPgto">
+          <option value="">— Não definido —</option>
+          <option value="Boleto">📄 Boleto</option>
+          <option value="Pix">📲 Pix</option>
+          <option value="Transferência">🏦 Transferência</option>
+          <option value="Cartão">💳 Cartão</option>
+          <option value="Dinheiro">💵 Dinheiro</option>
+          <option value="Crédito 30/60/90">📅 Crédito 30/60/90</option>
+          <option value="Outro">🔄 Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Prazo de pagamento</label>
+        <input id="efPrazo" placeholder="Ex: 30 dias, à vista…">
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Observação</label>
+        <input id="efObs">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeEditForn()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarEditForn()">✔ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: CONFIRMAR ══ -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal-box">
+    <div class="modal-title" id="mConfirmTitle">Confirmar</div>
+    <div class="modal-msg" id="mConfirmMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm(false)">Cancelar</button>
+      <button class="btn btn-danger" id="mConfirmOk" onclick="closeConfirm(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALHE VENDA ══ -->
+<div class="modal-overlay" id="modalVenda">
+  <div class="modal-box vd-size">
+    <div class="vd-header">
+      <div><div class="vd-id" id="mvId"></div><div class="vd-meta" id="mvMeta"></div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModalVenda()">✕ Fechar</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btn-ghost btn-sm" onclick="imprimirVenda()">🖨️ Imprimir</button></div>
+    <div id="mvObsWrap" style="display:none"><div class="vd-obs-label">Observação</div><div class="vd-obs" id="mvObs"></div></div>
+    <table class="vd-table"><thead><tr><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Custo unit.</th><th>Desconto</th><th>Total item</th></tr></thead><tbody id="mvItensBody"></tbody></table>
+    <div class="vd-totals" id="mvTotals"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDITAR VENDA ══ -->
+<div class="modal-overlay" id="modalEditVenda">
+  <div class="modal-box edit-size">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:17px;font-weight:700">Editar Venda <span id="evId" style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:15px"></span></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeEditVenda()">✕ Fechar</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Alterações no estoque são recalculadas automaticamente ao salvar.</div>
+    <div class="edit-section-title">Informações gerais</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:0">
+      <div class="form-group"><label>Cliente</label><select id="evCliente"></select></div>
+      <div class="form-group"><label>Data</label><input type="date" id="evData"></div>
+      <div class="form-group"><label>Forma de pagamento</label><select id="evFormaPgto"><option value="">—</option><option>Dinheiro</option><option>Pix</option><option>Cartão Débito</option><option>Cartão Crédito</option><option>Boleto</option><option>Outro</option></select></div>
+      <div class="form-group"><label>Vendedor</label><select id="evVendedor"><option value="">— Nenhum —</option></select></div>
+    </div>
+    <div class="edit-section-title">Observação</div>
+    <textarea id="evObs" placeholder="Observação opcional…" rows="2"></textarea>
+    <div class="edit-section-title">Itens da venda</div>
+    <table class="edit-itens-table"><thead><tr><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Desconto %</th><th>Total</th><th></th></tr></thead><tbody id="evItensBody"></tbody></table>
+    <div class="edit-section-title" style="margin-top:14px">Adicionar item</div>
+    <div class="edit-add-row" style="grid-template-columns:120px 1fr 80px 80px auto">
+      <div><label>Tipo</label><select id="evAddTipo" onchange="onEvAddTipoChange()"><option value="produto">📦 Produto</option><option value="servico">🎯 Serviço</option></select></div>
+      <div><label>Item</label><select id="evAddProduto"></select><select id="evAddServico" style="display:none"></select></div>
+      <div><label>Qtd</label><input type="number" inputmode="numeric" id="evAddQtd" placeholder="1" min="1" step="1"></div>
+      <div><label>Desc. %</label><input type="number" inputmode="decimal" id="evAddDesc" placeholder="0" min="0" max="100" step="0.01"></div>
+      <div><label>&nbsp;</label><button class="btn btn-primary btn-sm" onclick="evAddItem()" style="width:100%">＋ Add</button></div>
+    </div>
+    <div class="edit-resumo" id="evResumo" style="margin-bottom:4px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEditVenda()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarVendaEdit()">✔ Salvar venda</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ABRIR CAIXA ══ -->
+<div class="modal-overlay" id="modalAbrirCaixa">
+  <div class="modal-box">
+    <div class="modal-title">🔓 Abrir caixa de hoje</div>
+    <div class="modal-msg">Informe o valor que já está no caixa físico antes de iniciar (troco/fundo de caixa). Pode ser zero.</div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Fundo de abertura (R$)</label>
+      <input id="aberturaFundo" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModalAbrirCaixa()">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarAberturaCaixa()">🔓 Abrir caixa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: RECIBO PÓS-VENDA ══ -->
+<div class="modal-overlay" id="modalRecibo">
+  <div class="modal-box recibo-size">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:600">🧾 Recibo gerado</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModalRecibo()">✕</button>
+    </div>
+    <div class="recibo-preview" id="reciboPreviewContent"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="closeModalRecibo()">Fechar</button>
+      <button class="btn btn-ghost" onclick="imprimirReciboAtual()">🖨️ Imprimir</button>
+      <button class="btn btn-primary" onclick="exportarReciboPDF()">📄 Salvar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALHES CAIXA ══ -->
+<div class="modal-overlay" id="modalCaixaDet">
+  <div class="modal-box caixa-det-size">
+    <div class="caixa-det-header">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--accent)" id="cdetData"></div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px" id="cdetStatus"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModalCaixaDet()">✕ Fechar</button>
+    </div>
+    <div class="caixa-det-nums" id="cdetNums"></div>
+    <div class="caixa-det-section">💳 Receita por forma de pagamento</div>
+    <div class="caixa-det-pgto-grid" id="cdetPgtoGrid"></div>
+    <div class="caixa-det-section">📋 Movimentações manuais</div>
+    <div id="cdetMovs"></div>
+    <div id="cdetConferencia" style="display:none">
+      <div class="caixa-det-section">🔒 Conferência de fechamento</div>
+      <div id="cdetConferenciaBody"></div>
+    </div>
+  </div>
+</div>
+
