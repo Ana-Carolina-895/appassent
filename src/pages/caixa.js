@@ -9,7 +9,7 @@ function openModalAbrirCaixa(){
   document.getElementById('modalAbrirCaixa').classList.add('open')
 }
 function closeModalAbrirCaixa(){document.getElementById('modalAbrirCaixa').classList.remove('open')}
-document.getElementById('modalAbrirCaixa').addEventListener('click',e=>{if(e.target===document.getElementById('modalAbrirCaixa'))closeModalAbrirCaixa()})
+document.getElementById('modalAbrirCaixa')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalAbrirCaixa'))closeModalAbrirCaixa()})
 function confirmarAberturaCaixa(){
   const fundo=parseNum(document.getElementById('aberturaFundo').value,0,0)
   caixas.push({data:hoje(),status:'aberto',abertura:new Date().toISOString(),saldoAbertura:fundo,fechamento:null,movimentacoes:[],valorContado:null,diferencaCaixa:null,obsFechamento:''})
