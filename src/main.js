@@ -205,6 +205,30 @@ function closeMobileSidebar() {
   document.querySelector('.mobile-overlay').classList.remove('show')
 }
 
+/* ══ CATEGORIAS DE SERVIÇO ══ */
+let servicoCategorias = []
+
+function loadCategorias() {
+  try {
+    const salvas = JSON.parse(localStorage.getItem('assent_serv_cats') || '[]')
+    servicoCategorias = Array.isArray(salvas) ? salvas : []
+  } catch(e) { servicoCategorias = [] }
+  servicos.forEach(s => {
+    if (s.categoria && !servicoCategorias.includes(s.categoria))
+      servicoCategorias.push(s.categoria)
+  })
+  servicoCategorias.sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
+
+function saveCategorias() {
+  try { localStorage.setItem('assent_serv_cats', JSON.stringify(servicoCategorias)) } catch(e) {}
+}
+
+function getCatOptions(selected) {
+  return '<option value="">— Sem categoria —</option>' +
+    servicoCategorias.map(c => '<option value="' + escHtml(c) + '"' + (c === selected ? ' selected' : '') + '>' + escHtml(c) + '</option>').join('')
+}
+
 /* ══ RENDER INICIAL: chamada após _iniciarApp carregar os dados ══ */
 function render() {
   loadCategorias()
@@ -332,3 +356,8 @@ window.closeMobileSidebar  = closeMobileSidebar
 window.loginComEmail       = loginComEmail
 window.loginComGoogle      = loginComGoogle
 window.fazerLogout         = fazerLogout
+
+// Expõe funções de categorias globalmente
+window.loadCategorias = loadCategorias
+window.saveCategorias = saveCategorias
+window.getCatOptions  = getCatOptions
