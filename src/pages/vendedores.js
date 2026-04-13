@@ -193,4 +193,3 @@ function renderRelVendedores(pv,sumEl,titleEl,countEl,contentEl){
   '</tbody></table>'+
   '<div style="font-size:12px;color:var(--text-muted);margin-top:8px;padding:4px">💡 Clique em um vendedor para ver as vendas detalhadas</div>'
 }
-
