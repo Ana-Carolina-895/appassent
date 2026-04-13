@@ -186,7 +186,7 @@ function abrirDetalheDespesa(i){
   document.getElementById('modalDespesaDet').classList.add('open')
 }
 function closeModalDespesaDet(){document.getElementById('modalDespesaDet').classList.remove('open')}
-document.getElementById('modalDespesaDet').addEventListener('click',e=>{if(e.target===document.getElementById('modalDespesaDet'))closeModalDespesaDet()})
+document.getElementById('modalDespesaDet')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalDespesaDet'))closeModalDespesaDet()})
 
 /* ══ EDITAR DESPESA ══ */
 let _editDespIdx=null
@@ -225,5 +225,5 @@ function salvarEditDespesa(){
   save()
 }
 function closeEditDespesa(){document.getElementById('modalEditDespesa').classList.remove('open');_editDespIdx=null}
-document.getElementById('modalEditDespesa').addEventListener('click',e=>{if(e.target===document.getElementById('modalEditDespesa'))closeEditDespesa()})
+document.getElementById('modalEditDespesa')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalEditDespesa'))closeEditDespesa()})
 
