@@ -85,5 +85,5 @@ function salvarEditForn(){
   save()
 }
 function closeEditForn(){document.getElementById('modalEditForn').classList.remove('open');_editFornIdx=null}
-document.getElementById('modalEditForn').addEventListener('click',e=>{if(e.target===document.getElementById('modalEditForn'))closeEditForn()})
+document.getElementById('modalEditForn')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalEditForn'))closeEditForn()})
 
