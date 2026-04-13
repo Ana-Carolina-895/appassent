@@ -1,0 +1,17 @@
+{
+  "name": "assent",
+  "version": "1.2.0",
+  "description": "Sistema de gestão empresarial ASSENT",
+  "private": true,
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "firebase": "^10.12.2"
+  }
+}

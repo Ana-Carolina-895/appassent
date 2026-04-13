@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ASSENT">
+<meta name="description" content="Sistema de gestão empresarial offline">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,8 94,80 6,80' fill='none' stroke='%23C9A84C' stroke-width='10' stroke-linejoin='round'/%3E%3Cline x1='50' y1='8' x2='50' y2='80' stroke='%23C9A84C' stroke-width='5' opacity='.5'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>ASSENT Sistema v1.2</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Libs externas (UMD — carregam no escopo global, compatível com scripts normais) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Estilos -->
+<link rel="stylesheet" href="src/styles/themes.css">
+<link rel="stylesheet" href="src/styles/layout.css">
+<link rel="stylesheet" href="src/styles/responsive.css">
+
+<!--
+  ═══════════════════════════════════════════════════════════════
+  ESTRATÉGIA DE CARREGAMENTO — GitHub Pages (sem bundler)
+  ───────────────────────────────────────────────────────────────
+  Ordem garantida:
+  1. main.js (defer)        → define todas as funções globais
+  2. pages/*.js (defer)     → renderizadores de cada página
+  3. modal-cadastros.js (defer) → patch de fechamento de modais
+  4. fixes.js (defer)       → sobrescreve funções com versões corrigidas
+  5. firebase.js (module)   → inicia auth; chama _iniciarApp() quando pronto
+
+  Por que defer nos scripts normais?
+  - defer garante que executam APÓS o HTML ser parseado
+  - defer RESPEITA a ordem de declaração entre si
+  - O module (firebase.js) também é adiado por padrão
+  - firebase.js só chama _iniciarApp() após onAuthStateChanged,
+    o que acontece depois que todos os defer já executaram ✓
+  ═══════════════════════════════════════════════════════════════
+-->
+
+<!-- 1. App principal (utils, state, save, render, auth, navegação) -->
+<script src="src/main.js" defer></script>
+
+<!-- 2. Páginas (cada uma define sua função render*) -->
+<script src="src/pages/vendas.js" defer></script>
+<script src="src/pages/dashboard.js" defer></script>
+<script src="src/pages/clientes.js" defer></script>
+<script src="src/pages/produtos.js" defer></script>
+<script src="src/pages/servicos.js" defer></script>
+<script src="src/pages/caixa.js" defer></script>
+<script src="src/pages/despesas.js" defer></script>
+<script src="src/pages/fornecedores.js" defer></script>
+<script src="src/pages/fiado.js" defer></script>
+<script src="src/pages/agenda.js" defer></script>
+<script src="src/pages/relatorios.js" defer></script>
+<script src="src/pages/vendedores.js" defer></script>
+
+<!-- 3. Outros módulos -->
+<script src="src/config.js" defer></script>
+<script src="src/backup.js" defer></script>
+
+<!-- 4. Patch de modais — após os renders das páginas -->
+<script src="src/modal-cadastros.js" defer></script>
+
+<!-- 5. Fixes — SEMPRE por último: sobrescreve com versões corrigidas -->
+<script src="src/fixes.js" defer></script>
+
+<!-- 6. Firebase (type="module") — inicia auth após tudo acima ter executado -->
+<script type="module" src="src/firebase.js"></script>
+
+</head>
+<body>
+
+<!-- ══ LOADING INICIAL ══ -->
+<div id="loadingInicial" style="position:fixed;inset:0;background:#020201;display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="text-align:center">
+    <svg viewBox="0 0 100 100" width="60" height="60" style="margin-bottom:16px">
+      <polygon points="50,8 94,80 6,80" fill="none" stroke="#C9A84C" stroke-width="10" stroke-linejoin="round"/>
+      <line x1="50" y1="8" x2="50" y2="80" stroke="#C9A84C" stroke-width="5" opacity=".5"/>
+    </svg>
+    <div id="loginLoading" style="color:#C9A84C;font-family:Sora,sans-serif;font-size:13px;letter-spacing:.1em">CARREGANDO...</div>
+  </div>
+</div>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen" style="display:none"></div>
+
+<!-- ══ APP SHELL ══ -->
+<div id="app" style="display:none">
+
+  <!-- Mobile overlay -->
+  <div class="mobile-overlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo" id="sidebarLogo"></div>
+      <div class="brand-name" id="sidebarNome">ASSENT</div>
+    </div>
+
+    <div class="sidebar-section-label">GESTÃO</div>
+    <button class="nav-item active" data-page="dashboard"    onclick="showPage('dashboard',this)">📊 Dashboard</button>
+    <button class="nav-item"        data-page="clientes"     onclick="showPage('clientes',this)">👥 Clientes</button>
+    <button class="nav-item"        data-page="produtos"     onclick="showPage('produtos',this)">📦 Produtos</button>
+    <button class="nav-item"        data-page="servicos"     onclick="showPage('servicos',this)">🔧 Serviços</button>
+
+    <div class="sidebar-section-label">OPERAÇÃO</div>
+    <button class="nav-item"        data-page="vendas"       onclick="showPage('vendas',this)">🛒 Vendas</button>
+    <button class="nav-item"        data-page="caixa"        onclick="showPage('caixa',this)">💰 Caixa</button>
+    <button class="nav-item"        data-page="despesas"     onclick="showPage('despesas',this)">📉 Despesas</button>
+    <button class="nav-item"        data-page="fiado"        onclick="showPage('fiado',this)">🤝 Fiado</button>
+    <button class="nav-item"        data-page="fornecedores" onclick="showPage('fornecedores',this)">🏭 Fornecedores</button>
+    <button class="nav-item"        data-page="agenda"       onclick="showPage('agenda',this)">📅 Agenda</button>
+
+    <div class="sidebar-section-label">ANÁLISE</div>
+    <button class="nav-item"        data-page="relatorios"   onclick="showPage('relatorios',this)">📈 Relatórios</button>
+
+    <div class="sidebar-section-label">SISTEMA</div>
+    <button class="nav-item"        data-page="vendedores"   onclick="showPage('vendedores',this)">👤 Vendedores</button>
+    <button class="nav-item"        data-page="atalhos"      onclick="showPage('atalhos',this)">⚡ Atalhos</button>
+    <button class="nav-item"        data-page="config"       onclick="showPage('config',this)">⚙️ Configurações</button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <button class="topbar-hamburger" onclick="toggleMobileSidebar()">☰</button>
+      <div class="topbar-empresa" id="topbarEmpresa">
+        <div class="topbar-logo" id="topbarLogo"></div>
+        <div class="topbar-nome" id="topbarNome">ASSENT</div>
+      </div>
+      <div class="topbar-search">
+        <input id="globalSearch" placeholder="🔍 Buscar…" oninput="showGlobalDropdown(this.value)" onblur="setTimeout(()=>document.getElementById('globalDropdown').style.display='none',200)">
+        <div id="globalDropdown" class="search-dropdown" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="content">
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page active"></div>
+
+      <!-- Clientes -->
+      <div id="page-clientes" class="page">
+        <div class="toolbar" style="justify-content:space-between">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaCliente" placeholder="Buscar por nome, CPF ou telefone…" oninput="renderClientes()"></div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovoCliente()">＋ Novo cliente</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Clientes cadastrados</span><span class="table-count" id="cntClientes">0</span></div>
+          <table><thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Endereço</th><th>Instagram</th><th>Ações</th></tr></thead><tbody id="clientesBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Produtos -->
+      <div id="page-produtos" class="page">
+        <div class="toolbar" style="justify-content:space-between">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaProduto" placeholder="Buscar produto por nome…" oninput="renderProdutos()"></div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovoProduto()">＋ Novo produto</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Produtos cadastrados</span><span class="table-count" id="cntProdutos">0</span></div>
+          <table><thead><tr><th style="width:52px"></th><th>Produto</th><th>Preço</th><th>Custo</th><th>Margem</th><th>Estoque</th><th>Ações</th></tr></thead><tbody id="produtosBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Serviços -->
+      <div id="page-servicos" class="page">
+        <div class="toolbar" style="justify-content:space-between">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaServico" placeholder="Buscar serviço por nome ou categoria…" oninput="renderServicos()"></div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovoServico()">＋ Novo serviço</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Serviços cadastrados</span><span class="table-count" id="cntServicos">0</span></div>
+          <table><thead><tr><th>Serviço</th><th>Categoria</th><th>Preço</th><th>Custo</th><th>Margem</th><th>Descrição</th><th>Ações</th></tr></thead><tbody id="servicosBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Vendas -->
+      <div id="page-vendas" class="page"></div>
+
+      <!-- Caixa -->
+      <div id="page-caixa" class="page"></div>
+
+      <!-- Despesas -->
+      <div id="page-despesas" class="page">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:4px">
+          <div class="dash-filter-bar" style="margin:0">
+            <span class="dash-filter-label">Mostrar:</span>
+            <button class="filter-btn active" onclick="setDespesaFiltro('todas',this)">Todas</button>
+            <button class="filter-btn" onclick="setDespesaFiltro('pendentes',this)">⏳ Pendentes</button>
+            <button class="filter-btn" onclick="setDespesaFiltro('vencidas',this)">🔴 Vencidas</button>
+            <button class="filter-btn" onclick="setDespesaFiltro('pagas',this)">✅ Pagas</button>
+            <button class="filter-btn" onclick="setDespesaFiltro('mes',this)">Este mês</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovaDespesa()">＋ Nova despesa</button>
+        </div>
+        <div class="grid-stats" style="margin-bottom:20px">
+          <div class="stat-card c-red"><div class="stat-header"><div class="stat-icon">🔴</div><div class="stat-label">Vencidas</div></div><div class="stat-value" id="dStatVencidas">0</div></div>
+          <div class="stat-card c-yellow"><div class="stat-header"><div class="stat-icon">⚠️</div><div class="stat-label">Vencem em 3 dias</div></div><div class="stat-value" id="dStatAVencer">0</div></div>
+          <div class="stat-card c-purple"><div class="stat-header"><div class="stat-icon">⏳</div><div class="stat-label">Total pendente</div></div><div class="stat-value" id="dStatTotal">R$0</div></div>
+          <div class="stat-card c-green"><div class="stat-header"><div class="stat-icon">✅</div><div class="stat-label">Pagas este mês</div></div><div class="stat-value" id="dStatPagas">R$0</div></div>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Despesas</span><span class="table-count" id="cntDespesas">0</span></div>
+          <table><thead><tr><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Fornecedor</th><th>Ações</th></tr></thead><tbody id="despesasBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Fiado -->
+      <div id="page-fiado" class="page"></div>
+
+      <!-- Fornecedores -->
+      <div id="page-fornecedores" class="page">
+        <div class="toolbar" style="justify-content:space-between">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaForn" placeholder="Buscar fornecedor…" oninput="renderFornecedores()"></div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovoFornecedor()">＋ Novo fornecedor</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Fornecedores</span><span class="table-count" id="cntForn">0</span></div>
+          <table><thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Documento</th><th>Pagamento</th><th>Prazo</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="fornBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Agenda -->
+      <div id="page-agenda" class="page"></div>
+
+      <!-- Relatórios -->
+      <div id="page-relatorios" class="page"></div>
+
+      <!-- Vendedores -->
+      <div id="page-vendedores" class="page">
+        <div class="toolbar" style="justify-content:space-between">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaVendedor" placeholder="Buscar vendedor…" oninput="renderVendedores()"></div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalNovoVendedor()">＋ Novo vendedor</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Vendedores</span><span class="table-count" id="cntVendedores">0</span></div>
+          <table><thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Comissão</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="vendedoresBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Atalhos -->
+      <div id="page-atalhos" class="page"></div>
+
+      <!-- Config -->
+      <div id="page-config" class="page"></div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ MODAIS DE CADASTRO ══ -->
+<!-- Cole aqui o conteúdo de src/modals/cadastros.html -->
+
+<!-- ══ MODAIS DE OPERAÇÃO ══ -->
+<!-- Cole aqui o conteúdo de src/modals/operacao.html -->
+
+<!-- ══ TOAST ══ -->
+<div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px"></div>
+
+<!-- ══ MODAL CONFIRMAR ══ -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal-box" style="max-width:380px;text-align:center">
+    <div id="modalConfirmTitle" style="font-size:16px;font-weight:700;margin-bottom:8px"></div>
+    <div id="modalConfirmMsg" style="color:var(--text-muted);margin-bottom:20px"></div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="closeConfirm(false)">Cancelar</button>
+      <button id="modalConfirmOk" class="btn btn-primary" onclick="closeConfirm(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
