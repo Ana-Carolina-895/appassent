@@ -1,3 +1,25 @@
+/* ══ SERVIÇOS ══ */
+function addServico(){
+  const nome=document.getElementById('servicoNome').value.trim()
+  if(!nome){setErr('fg-sNome',true);toast('Informe o nome do serviço.','warning');return}
+  setErr('fg-sNome',false)
+  if(servicos.some(s=>s.nome.toLowerCase()===nome.toLowerCase())){toast('Serviço já cadastrado.','error');return}
+  servicos.push({
+    nome,
+    preco:parseNum(document.getElementById('servicoPreco').value,0,0),
+    custo:parseNum(document.getElementById('servicoCusto').value,0,0),
+    categoria:document.getElementById('servicoCategoria').value.trim(),
+    descricao:document.getElementById('servicoDescricao').value.trim()
+  })
+  ;['servicoNome','servicoPreco','servicoCusto','servicoDescricao'].forEach(id=>document.getElementById(id).value='')
+  document.getElementById('servicoCategoria').value=''
+  const cs=document.getElementById('servicoCategoriaSearch');if(cs)cs.value=''
+  toast('✅ Serviço "'+nome+'" cadastrado com sucesso!');save()
+}
+
+function editarServico(i){servicoEditando=i;renderServicos()}
+function cancelarServico(){servicoEditando=null;renderServicos()}
+
 function salvarServico(i){
   const nome=document.getElementById('es_n'+i).value.trim()
   if(!nome){toast('Informe o nome do serviço.','warning');return}
@@ -167,7 +189,7 @@ function openModalCaixaDet(i){
   document.getElementById('modalCaixaDet').classList.add('open')
 }
 function closeModalCaixaDet(){document.getElementById('modalCaixaDet').classList.remove('open')}
-document.getElementById('modalCaixaDet')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalCaixaDet'))closeModalCaixaDet()})
+document.getElementById('modalCaixaDet').addEventListener('click',e=>{if(e.target===document.getElementById('modalCaixaDet'))closeModalCaixaDet()})
 
 /* ══ FOTO DE PRODUTO ══ */
 
@@ -202,10 +224,11 @@ function showGlobalDropdown(q){
   let html=''
 
   // Clientes
-  const rcl=clientes.reduce((acc,c,i)=>{if(c.nome.toLowerCase().includes(ql)||(c.cpf||'').includes(ql)||(c.telefone||'').includes(ql))acc.push({c,i});return acc},[]).slice(0,4)
+  const rcl=clientes.filter((c,i)=>c.nome.toLowerCase().includes(ql)||(c.cpf||'').includes(ql)||(c.telefone||'').includes(ql)).slice(0,4)
   if(rcl.length){
     html+='<div class="gs-group-label">👥 Clientes</div>'
-    html+=rcl.map(({c,i})=>{
+    html+=rcl.map((c,_)=>{
+      const i=clientes.indexOf(c)
       return'<div class="gs-item" onclick="goToCliente('+i+')">'+
         '<span class="gs-item-icon">👤</span>'+
         '<div class="gs-item-main"><div class="gs-item-name">'+escHtml(c.nome)+'</div>'+
@@ -215,10 +238,11 @@ function showGlobalDropdown(q){
   }
 
   // Produtos
-  const rprod=produtos.reduce((acc,p,i)=>{if(p.nome.toLowerCase().includes(ql))acc.push({p,i});return acc},[]).slice(0,4)
+  const rprod=produtos.filter((p,i)=>p.nome.toLowerCase().includes(ql)).slice(0,4)
   if(rprod.length){
     html+='<div class="gs-group-label">📦 Produtos</div>'
-    html+=rprod.map(({p,i})=>{
+    html+=rprod.map((p,_)=>{
+      const i=produtos.indexOf(p)
       const min=config.estoqueMin!==undefined?config.estoqueMin:3
       const estoqBadge=p.estoque<=0?'<span style="color:var(--red);font-size:11px">⚠ Zerado</span>':p.estoque<=min?'<span style="color:var(--yellow);font-size:11px">⚠ Baixo</span>':''
       return'<div class="gs-item" onclick="goToProduto('+i+')">'+
@@ -243,11 +267,88 @@ function showGlobalDropdown(q){
   }
 
   // Vendas
-  const rvnd=vendas.reduce((acc,v,i)=>{if((v.id||'').toLowerCase().includes(ql)||(v.cliente||'').toLowerCase().includes(ql))acc.push({v,i});return acc},[]).slice(0,4)
+  const rvnd=vendas.filter(v=>(v.id||'').toLowerCase().includes(ql)||(v.cliente||'').toLowerCase().includes(ql)).slice(0,4)
   if(rvnd.length){
     html+='<div class="gs-group-label">💰 Vendas</div>'
-    html+=rvnd.map(({v,i})=>{
+    html+=rvnd.map(v=>{
+      const i=vendas.indexOf(v)
       return'<div class="gs-item" onclick="goToVenda('+i+')">'+
         '<span class="gs-item-icon">🛒</span>'+
         '<div class="gs-item-main"><div class="gs-item-name">'+escHtml(v.id||'—')+' — '+escHtml(v.cliente||'')+'</div>'+
         '<div class="gs-item-sub">'+fmtData(v.data)+' · '+brl(v.total)+'</div></div>'+
+      '</div>'
+    }).join('')
+  }
+
+  if(!html) html='<div class="gs-empty">Nenhum resultado para "'+escHtml(q)+'"</div>'
+  dd.innerHTML=html
+  dd.style.display='block'
+}
+function hideGlobalDropdown(){
+  _gsBlurTimer=setTimeout(()=>{
+    const dd=document.getElementById('globalSearchDropdown')
+    if(dd)dd.style.display='none'
+  },200)
+}
+function goToCliente(i){
+  clearTimeout(_gsBlurTimer)
+  closeGlobalSearch()
+  showPage('clientes',document.querySelector('.nav-btn:nth-child(3)'))
+  setTimeout(()=>{
+    const b=document.getElementById('buscaCliente')
+    if(b){b.value=clientes[i].nome;renderClientes()}
+  },50)
+}
+function goToProduto(i){
+  clearTimeout(_gsBlurTimer)
+  closeGlobalSearch()
+  showPage('produtos',document.querySelector('.nav-btn:nth-child(4)'))
+  setTimeout(()=>{
+    const b=document.getElementById('buscaProduto')
+    if(b){b.value=produtos[i].nome;renderProdutos()}
+  },50)
+}
+function goToServicos(){
+  clearTimeout(_gsBlurTimer)
+  closeGlobalSearch()
+  const btn=Array.from(document.querySelectorAll('.nav-btn')).find(b=>b.textContent.includes('Serviços'))
+  showPage('servicos',btn)
+}
+function goToVenda(i){
+  clearTimeout(_gsBlurTimer)
+  closeGlobalSearch()
+  const btn=Array.from(document.querySelectorAll('.nav-btn')).find(b=>b.textContent.includes('Vendas'))
+  showPage('vendas',btn)
+  setTimeout(()=>{
+    const b=document.getElementById('buscaVenda')
+    if(b){b.value=vendas[i].id||vendas[i].cliente;renderVendas()}
+    // abre modal de detalhe
+    openModalVenda(vendas[i])
+  },80)
+}
+function closeGlobalSearch(){
+  const inp=document.getElementById('globalSearchInput')
+  const dd=document.getElementById('globalSearchDropdown')
+  if(inp)inp.value=''
+  if(dd)dd.style.display='none'
+}
+// Fecha dropdown ao clicar fora
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#globalSearchWrap')){
+    const dd=document.getElementById('globalSearchDropdown')
+    if(dd)dd.style.display='none'
+  }
+})
+// Atalho ⌘K / Ctrl+K
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){
+    e.preventDefault()
+    const inp=document.getElementById('globalSearchInput')
+    if(inp){inp.focus();inp.select()}
+  }
+  if(e.key==='Escape'){
+    closeGlobalSearch()
+    document.getElementById('globalSearchInput')?.blur()
+  }
+})
+
