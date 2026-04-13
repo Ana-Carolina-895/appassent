@@ -1,3 +1,4 @@
+/* ══ CAIXA DIÁRIO ══ */
 function getCaixaHojeAberto(){return caixas.find(c=>c.data===hoje()&&c.status==='aberto')||null}
 function getCaixaHojeAbertoIdx(){return caixas.findIndex(c=>c.data===hoje()&&c.status==='aberto')}
 
@@ -8,7 +9,7 @@ function openModalAbrirCaixa(){
   document.getElementById('modalAbrirCaixa').classList.add('open')
 }
 function closeModalAbrirCaixa(){document.getElementById('modalAbrirCaixa').classList.remove('open')}
-document.getElementById('modalAbrirCaixa')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalAbrirCaixa'))closeModalAbrirCaixa()})
+document.getElementById('modalAbrirCaixa').addEventListener('click',e=>{if(e.target===document.getElementById('modalAbrirCaixa'))closeModalAbrirCaixa()})
 function confirmarAberturaCaixa(){
   const fundo=parseNum(document.getElementById('aberturaFundo').value,0,0)
   caixas.push({data:hoje(),status:'aberto',abertura:new Date().toISOString(),saldoAbertura:fundo,fechamento:null,movimentacoes:[],valorContado:null,diferencaCaixa:null,obsFechamento:''})
@@ -164,93 +165,3 @@ function excluirCaixa(i){
   showConfirm('Excluir o registro do caixa de '+fmtData(caixas[i].data)+'?',()=>{caixas.splice(i,1);toast('🗑️ Registro de caixa excluído.','info');save()})
 }
 
-/* ══ RELATÓRIOS ══ */
-let _relPeriod='7',_relTipo='vendas'
-function setRelPeriod(p,btn){_relPeriod=p;document.querySelectorAll('#relatorios .filter-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');document.getElementById('relDateRangeWrap').classList.toggle('show',p==='custom');renderRelatorio()}
-let _despesasSubTipo='periodo'
-function setDespesasSubTipo(t,btn){
-  _despesasSubTipo=t
-  document.querySelectorAll('#despesasSubFiltro .filter-btn').forEach(b=>b.classList.remove('active'))
-  if(btn)btn.classList.add('active')
-  renderRelatorio()
-}
-let _relMenuOpen=false
-function toggleRelMenu(){
-  _relMenuOpen=!_relMenuOpen
-  const dd=document.getElementById('relMenuDropdown')
-  const arrow=document.getElementById('relMenuArrow')
-  const toggle=document.getElementById('relMenuToggle')
-  if(dd)dd.classList.toggle('open',_relMenuOpen)
-  if(arrow)arrow.classList.toggle('open',_relMenuOpen)
-  if(toggle)toggle.style.borderRadius=_relMenuOpen?'var(--radius) var(--radius) 0 0':'var(--radius)'
-}
-function setRelTipo(t,btn){
-  _relTipo=t
-  document.querySelectorAll('.rel-tipo-btn').forEach(b=>b.classList.remove('active'))
-  if(btn){
-    btn.classList.add('active')
-    // Update toggle label with selected report name
-    const lbl=document.getElementById('relMenuLabel')
-    if(lbl)lbl.textContent=btn.textContent
-  }
-  // Close dropdown after selection
-  _relMenuOpen=false
-  const dd=document.getElementById('relMenuDropdown')
-  const arrow=document.getElementById('relMenuArrow')
-  const toggle=document.getElementById('relMenuToggle')
-  if(dd)dd.classList.remove('open')
-  if(arrow)arrow.classList.remove('open')
-  if(toggle)toggle.style.borderRadius='var(--radius)'
-  // mostrar sub-filtros conforme tipo
-  const subDesp=document.getElementById('despesasSubFiltro')
-  if(subDesp)subDesp.style.display=t.startsWith('despesas')?'block':'none'
-  const subVend=document.getElementById('vendedorSubFiltro')
-  if(subVend){
-    subVend.style.display=t==='vendedores_rel'?'block':'none'
-    if(t==='vendedores_rel')_atualizarVendedorFiltroButtons()
-  }
-  renderRelatorio()
-}
-function vendasRelPeriodo(){
-  const agora=new Date()
-  return vendas.map((v,_i)=>({...v,_realIdx:_i})).filter(v=>{
-    if(!v.data)return _relPeriod==='todos'
-    const d=new Date(v.data+'T00:00:00')
-    if(_relPeriod==='todos')return true
-    if(_relPeriod==='hoje')return v.data===hoje()
-    if(_relPeriod==='7'){const l=new Date(agora);l.setDate(l.getDate()-6);return d>=l}
-    if(_relPeriod==='30'){const l=new Date(agora);l.setDate(l.getDate()-29);return d>=l}
-    if(_relPeriod==='mes')return d.getFullYear()===agora.getFullYear()&&d.getMonth()===agora.getMonth()
-    if(_relPeriod==='custom'){const de=document.getElementById('relDateDe').value,ate=document.getElementById('relDateAte').value;if(de&&d<new Date(de+'T00:00:00'))return false;if(ate&&d>new Date(ate+'T23:59:59'))return false;return true}
-    return true
-  })
-}
-function renderRelatorio(){
-  const pv=vendasRelPeriodo()
-  const sumEl=document.getElementById('relSummary'),titleEl=document.getElementById('relTableTitle'),countEl=document.getElementById('relTableCount'),contentEl=document.getElementById('relTableContent')
-  if(_relTipo==='vendas'){
-    const fat=pv.reduce((t,v)=>t+(v.total||0),0),lucro=pv.reduce((t,v)=>t+calcLucroVenda(v),0)
-    sumEl.innerHTML='<div class="rel-sum-card"><div class="rel-sum-label">Total de vendas</div><div class="rel-sum-value" style="color:var(--purple)">'+pv.length+'</div></div><div class="rel-sum-card"><div class="rel-sum-label">Faturamento</div><div class="rel-sum-value" style="color:var(--green)">'+brl(fat)+'</div></div><div class="rel-sum-card"><div class="rel-sum-label">Lucro estimado</div><div class="rel-sum-value" style="color:var(--indigo)">'+brl(lucro)+'</div></div><div class="rel-sum-card"><div class="rel-sum-label">Ticket médio</div><div class="rel-sum-value" style="color:var(--yellow)">'+brl(pv.length?fat/pv.length:0)+'</div></div>'
-    titleEl.textContent='Lista de vendas';countEl.textContent=pv.length
-    if(!pv.length){contentEl.innerHTML='<div class="empty-state"><span class="empty-icon">🛒</span>Nenhuma venda no período</div>';return}
-    contentEl.innerHTML='<table><thead><tr><th>ID</th><th>Data</th><th>Cliente</th><th>Pagamento</th><th>Itens</th><th>Total</th><th>Lucro est.</th></tr></thead><tbody>'+
-      [...pv].sort((a,b)=>b.data>a.data?1:b.data<a.data?-1:0).map(v=>{
-        const idx=v._realIdx
-        return'<tr class="tr-click" onclick="openModalVenda(vendas['+idx+'])" title="Ver detalhes">'+
-          '<td><span class="badge badge-blue">'+escHtml(v.id||'—')+'</span></td>'+
-          '<td class="td-muted">'+fmtData(v.data)+'</td>'+
-          '<td>'+escHtml(v.cliente||'—')+'</td>'+
-          '<td class="td-muted">'+(v.formaPagamento||'—')+'</td>'+
-          '<td class="td-muted">'+(v.itens||[]).length+'</td>'+
-          '<td class="td-mono">'+brl(v.total)+'</td>'+
-          '<td class="td-mono" style="color:var(--indigo)">'+brl(calcLucroVenda(v))+'</td>'+
-        '</tr>'
-      }).join('')+
-    '</tbody></table>'
-  } else if(_relTipo==='faturamento'){
-    const fat=pv.reduce((t,v)=>t+(v.total||0),0),porDia={}
-    pv.forEach(v=>{const d=v.data||'?';porDia[d]=(porDia[d]||0)+(v.total||0)})
-    const dias=Object.entries(porDia).sort((a,b)=>b[0]>a[0]?1:-1)
-    sumEl.innerHTML='<div class="rel-sum-card"><div class="rel-sum-label">Faturamento total</div><div class="rel-sum-value" style="color:var(--green)">'+brl(fat)+'</div></div><div class="rel-sum-card"><div class="rel-sum-label">Dias com vendas</div><div class="rel-sum-value" style="color:var(--accent)">'+dias.length+'</div></div><div class="rel-sum-card"><div class="rel-sum-label">Média por dia</div><div class="rel-sum-value" style="color:var(--yellow)">'+brl(dias.length?fat/dias.length:0)+'</div></div>'
-    titleEl.textContent='Faturamento por dia';countEl.textContent=dias.length+' dias'
-    if(!dias.length){contentEl.innerHTML='<div class="empty-state"><span class="empty-icon">💵</span>Sem vendas no período</div>';return}
