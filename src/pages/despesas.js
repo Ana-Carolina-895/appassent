@@ -1,3 +1,58 @@
+/* ══ DESPESAS ══ */
+let _despesaFiltro='todas'
+
+function addDespesa(){
+  const nome=document.getElementById('despesaNome').value.trim()
+  const valor=parseNum(document.getElementById('despesaValor').value,0,0)
+  const venc=document.getElementById('despesaVenc').value
+  if(!nome){setErr('fg-dNome',true);toast('Informe a descrição.','warning');return}
+  setErr('fg-dNome',false)
+  if(!valor){setErr('fg-dValor',true);toast('Informe o valor.','warning');return}
+  setErr('fg-dValor',false)
+  if(!venc){toast('Informe o vencimento.','warning');return}
+  despesas.push({
+    nome,valor,venc,
+    categoria:document.getElementById('despesaCategoria').value,
+    fornecedor:document.getElementById('despesaFornecedor').value,
+    recorrente:document.getElementById('despesaRecorrente').value,
+    obs:document.getElementById('despesaObs').value.trim(),
+    paga:false,dataPagamento:null
+  })
+  ;['despesaNome','despesaValor','despesaVenc','despesaObs'].forEach(id=>document.getElementById(id).value='')
+  toast('✅ Despesa "'+nome+'" cadastrada!')
+  save()
+}
+
+function pagarDespesa(i){
+  despesas[i].paga=true
+  despesas[i].dataPagamento=hoje()
+  toast('✅ Despesa marcada como paga!')
+  save()
+}
+
+function despagarDespesa(i){
+  despesas[i].paga=false
+  despesas[i].dataPagamento=null
+  toast('↺ Despesa marcada como pendente.','info')
+  save()
+}
+
+function excluirDespesa(i){
+  const n=despesas[i].nome
+  showConfirm('Excluir a despesa "'+escHtml(n)+'"?',()=>{
+    despesas.splice(i,1)
+    toast('🗑️ Despesa removida.','info')
+    save()
+  })
+}
+
+function setDespesaFiltro(f,btn){
+  _despesaFiltro=f
+  document.querySelectorAll('#despesas .filter-btn').forEach(b=>b.classList.remove('active'))
+  if(btn)btn.classList.add('active')
+  renderDespesas()
+}
+
 function renderDespesas(){
   const hj=hoje()
   const em3=new Date();em3.setDate(em3.getDate()+3)
@@ -89,59 +144,6 @@ function renderDespesasAlert(){
   txt.textContent=partes.join(' · ')
 }
 
-/* ══ FORNECEDORES ══ */
-let _fornEditando=null
-
-function addFornecedor(){
-  const nome=document.getElementById('fornNome').value.trim()
-  if(!nome){setErr('fg-fNome',true);toast('Informe o nome.','warning');return}
-  setErr('fg-fNome',false)
-  if(fornecedores.some(f=>f.nome.toLowerCase()===nome.toLowerCase())){toast('⚠️ Fornecedor já cadastrado.','error');return}
-  fornecedores.push({
-    nome,
-    tel:document.getElementById('fornTel').value.trim(),
-    email:document.getElementById('fornEmail').value.trim(),
-    doc:document.getElementById('fornDoc').value.trim(),
-    obs:document.getElementById('fornObs').value.trim(),
-    formaPgto:document.getElementById('fornFormaPgto').value,
-    prazo:document.getElementById('fornPrazo').value.trim()
-  })
-  ;['fornNome','fornTel','fornEmail','fornDoc','fornObs','fornPrazo'].forEach(id=>document.getElementById(id).value='')
-  document.getElementById('fornFormaPgto').value=''
-  toast('✅ Fornecedor "'+nome+'" cadastrado!')
-  save()
-}
-
-function excluirFornecedor(i){
-  const n=fornecedores[i].nome
-  showConfirm('Excluir o fornecedor "'+escHtml(n)+'"?',()=>{
-    fornecedores.splice(i,1)
-    toast('🗑️ Fornecedor removido.','info')
-    save()
-  })
-}
-
-function renderFornecedores(){
-  const q=(document.getElementById('buscaForn')?.value||'').toLowerCase()
-  const f=fornecedores.map((x,i)=>({...x,_i:i})).filter(x=>x.nome.toLowerCase().includes(q)||(x.email||'').toLowerCase().includes(q))
-  const cnt=document.getElementById('cntForn');if(cnt)cnt.textContent=f.length
-  const b=document.getElementById('fornBody');if(!b)return
-  if(!f.length){b.innerHTML='<tr><td colspan="8"><div class="empty-state"><span class="empty-icon">🏭</span>Nenhum fornecedor</div></td></tr>';return}
-  b.innerHTML=f.map(x=>{
-    const i=x._i
-    return'<tr>'+
-      '<td>'+escHtml(x.nome)+'</td>'+
-      '<td class="td-muted">'+(x.tel||'—')+'</td>'+
-      '<td class="td-muted">'+(x.email||'—')+'</td>'+
-      '<td class="td-mono td-muted">'+(x.doc||'—')+'</td>'+
-      '<td class="td-muted">'+(x.formaPgto||'—')+'</td>'+
-      '<td class="td-muted">'+(x.prazo||'—')+'</td>'+
-      '<td class="td-muted">'+(x.obs||'—')+'</td>'+
-      '<td><div class="td-actions"><button class="btn btn-warning btn-sm" onclick="editarForn('+i+')">Editar</button><button class="btn btn-danger btn-sm" onclick="excluirFornecedor('+i+')">Excluir</button></div></td>'+
-    '</tr>'
-  }).join('')
-}
-
 /* ══ DETALHE DESPESA ══ */
 function abrirDetalheDespesa(i){
   const d=despesas[i]
@@ -184,7 +186,7 @@ function abrirDetalheDespesa(i){
   document.getElementById('modalDespesaDet').classList.add('open')
 }
 function closeModalDespesaDet(){document.getElementById('modalDespesaDet').classList.remove('open')}
-document.getElementById('modalDespesaDet')?.addEventListener('click',e=>{if(e.target===document.getElementById('modalDespesaDet'))closeModalDespesaDet()})
+document.getElementById('modalDespesaDet').addEventListener('click',e=>{if(e.target===document.getElementById('modalDespesaDet'))closeModalDespesaDet()})
 
 /* ══ EDITAR DESPESA ══ */
 let _editDespIdx=null
@@ -199,3 +201,29 @@ function editarDespesa(i){
   document.getElementById('edObs').value=d.obs||''
   // Populate fornecedor select
   const fs=document.getElementById('edFornecedor')
+  fs.innerHTML='<option value="">— Nenhum —</option>'+fornecedores.map(f=>'<option value="'+escHtml(f.nome)+'"'+(f.nome===d.fornecedor?' selected':'')+'>'+escHtml(f.nome)+'</option>').join('')
+  document.getElementById('modalEditDespesa').classList.add('open')
+}
+function salvarEditDespesa(){
+  if(_editDespIdx===null)return
+  const nome=document.getElementById('edNome').value.trim()
+  const valor=parseNum(document.getElementById('edValor').value,0,0)
+  const venc=document.getElementById('edVenc').value
+  if(!nome){toast('⚠️ Informe a descrição.','warning');return}
+  if(!valor){toast('⚠️ Informe o valor.','warning');return}
+  if(!venc){toast('⚠️ Informe o vencimento.','warning');return}
+  const orig=despesas[_editDespIdx]
+  despesas[_editDespIdx]={
+    ...orig,nome,valor,venc,
+    categoria:document.getElementById('edCategoria').value,
+    fornecedor:document.getElementById('edFornecedor').value,
+    recorrente:document.getElementById('edRecorrente').value,
+    obs:document.getElementById('edObs').value.trim()
+  }
+  closeEditDespesa()
+  toast('✅ Despesa "'+nome+'" atualizada!')
+  save()
+}
+function closeEditDespesa(){document.getElementById('modalEditDespesa').classList.remove('open');_editDespIdx=null}
+document.getElementById('modalEditDespesa').addEventListener('click',e=>{if(e.target===document.getElementById('modalEditDespesa'))closeEditDespesa()})
+
