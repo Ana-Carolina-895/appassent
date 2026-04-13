@@ -1,6 +1,34 @@
+/* ══ FIADO / A RECEBER ══ */
+let _fiadoFiltro='pendentes'
+
+function onFormaPgtoChange(){
+  const v=document.getElementById('vendaFormaPgto').value
+  const fg=document.getElementById('fgFiadoVenc')
+  const fs=document.getElementById('fgSinal')
+  if(fg) fg.style.display=(v==='Fiado'||v==='Parcelado')?'block':'none'
+  if(fs) fs.style.display=v==='Sinal'?'block':'none'
+  if(v==='Sinal') atualizarRestanteSinal()
+}
+function atualizarRestanteSinal(){
+  const sb=itensVenda.reduce((t,it)=>t+it.preco*it.qtd,0)
+  const sd=itensVenda.reduce((t,it)=>t+it.preco*it.qtd*(clamp(it.desconto)/100),0)
+  const total=sb-sd
+  const sinal=parseFloat(document.getElementById('vendaSinalValor')?.value||0)||0
+  const restante=Math.max(0,total-sinal)
+  const el=document.getElementById('vendaSinalRestante')
+  if(el) el.textContent=brl(restante)
+}
+
+function setFiadoFiltro(f,btn){
+  _fiadoFiltro=f
+  document.querySelectorAll('#fiado .filter-btn').forEach(b=>b.classList.remove('active'))
+  if(btn)btn.classList.add('active')
+  renderFiado()
+}
+
 function renderFiado(){
   const hj=hoje()
-  const fiadoVendas=vendas.map((v,_i)=>({...v,_realIdx:_i})).filter(v=>v.fiado)
+  const fiadoVendas=vendas.filter(v=>v.fiado)
   // Stats
   const emAberto=fiadoVendas.filter(v=>!v.fiadoRecebido)
   const vencidas=fiadoVendas.filter(v=>!v.fiadoRecebido&&v.fiadoVenc&&v.fiadoVenc<hj)
@@ -25,7 +53,7 @@ function renderFiado(){
   const b=el('fiadoBody');if(!b)return
   if(!lista.length){b.innerHTML='<tr><td colspan="7"><div class="empty-state"><span class="empty-icon">📒</span>Nenhum registro de fiado</div></td></tr>';return}
   b.innerHTML=lista.map(v=>{
-    const i=v._realIdx
+    const i=vendas.indexOf(v)
     const vencida=!v.fiadoRecebido&&v.fiadoVenc&&v.fiadoVenc<hj
     const proximaVenc=!v.fiadoRecebido&&v.fiadoVenc
     let statusBadge,rowStyle=''
@@ -99,3 +127,27 @@ function renderDashCalendario(){
     return
   }
   const em3=new Date();em3.setDate(em3.getDate()+3);const em3str=em3.toISOString().split('T')[0]
+  el.innerHTML=itens.slice(0,8).map(it=>{
+    const vencida=it.venc<hj
+    const urgente=!vencida&&it.venc<=em3str
+    const cls=vencida?'vencida':urgente?'urgente':'normal'
+    const icone=it.tipo==='fiado'?'📒':'📋'
+    const diasRestantes=Math.round((new Date(it.venc+'T00:00:00')-new Date(hj+'T00:00:00'))/(1000*60*60*24))
+    const diasLabel=diasRestantes===0?'Hoje!':diasRestantes===1?'Amanhã':diasRestantes>0?'em '+diasRestantes+'d':'há '+Math.abs(diasRestantes)+'d'
+    return'<div class="cal-item '+cls+'">'+
+      '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">'+
+        '<span>'+icone+'</span>'+
+        '<div style="min-width:0">'+
+          '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHtml(it.label)+'</div>'+
+          '<div style="font-size:10px;color:var(--text-muted)">'+escHtml(it.cat)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;margin-left:10px">'+
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:600">'+(it.tipo==='fiado'?'+':'-')+brl(it.valor)+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted)">'+diasLabel+'</div>'+
+      '</div>'+
+    '</div>'
+  }).join('')+
+  (itens.length>8?'<div style="padding:6px 0;text-align:center;font-size:12px;color:var(--text-muted)">…e mais '+(itens.length-8)+' vencimento(s)</div>':'')
+}
+
