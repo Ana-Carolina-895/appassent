@@ -46,9 +46,6 @@
   ═══════════════════════════════════════════════════════════════
 -->
 
-<!-- 0. Categorias de serviço — deve vir antes do main.js (define loadCategorias, getCatOptions) -->
-<script src="src/pages/categorias.js" defer></script>
-
 <!-- 1. App principal (utils, state, save, render, auth, navegação) -->
 <script src="src/main.js" defer></script>
 
@@ -152,7 +149,137 @@
     <div class="content" id="content">
 
       <!-- Dashboard -->
-      <div id="page-dashboard" class="page active"></div>
+      <div id="page-dashboard" class="page active">
+        <div class="dash-filter-bar">
+          <span class="dash-filter-label">Período:</span>
+          <button class="filter-btn" onclick="setDashPeriod('hoje',this)">Hoje</button>
+          <button class="filter-btn" onclick="setDashPeriod('7',this)">7 dias</button>
+          <button class="filter-btn" onclick="setDashPeriod('30',this)">30 dias</button>
+          <button class="filter-btn active" onclick="setDashPeriod('mes',this)">Este mês</button>
+          <button class="filter-btn" onclick="setDashPeriod('todos',this)">Tudo</button>
+          <button class="filter-btn" onclick="setDashPeriod('custom',this)">📅 Personalizado</button>
+          <div class="date-range-wrap" id="dateRangeWrap">
+            <input type="date" id="dashDateDe" onchange="renderDashboard()">
+            <span class="date-range-sep">até</span>
+            <input type="date" id="dashDateAte" onchange="renderDashboard()">
+          </div>
+        </div>
+        <div id="stockAlert" style="display:none">
+          <div class="stock-alert" onclick="toggleStockDetail()">
+            <span class="stock-alert-icon">⚠️</span>
+            <span class="stock-alert-text" id="stockAlertText"></span>
+            <span class="stock-alert-count" id="stockAlertCount"></span>
+            <span style="font-size:12px;color:var(--yellow);margin-left:4px" id="stockAlertChevron">▼</span>
+          </div>
+          <div class="stock-alert-detail" id="stockAlertDetail"></div>
+        </div>
+        <!-- Alerta de despesas -->
+        <div id="despesasAlert" style="display:none;margin-bottom:16px">
+          <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius-lg);padding:12px 18px;cursor:pointer" onclick="showPage('despesas',document.querySelector('[data-tip=Despesas]'))">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">🔴</span>
+              <span style="font-size:13px;color:var(--red);font-weight:500" id="despesasAlertText"></span>
+            </div>
+          </div>
+        </div>
+        <!-- Alerta de agenda -->
+        <div id="agendaAlert" style="display:none;margin-bottom:16px">
+          <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:12px 18px;cursor:pointer" onclick="showPage('agenda',document.querySelector('[data-tip=Agenda]'))">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <span style="font-size:16px">📅</span>
+              <span style="font-size:13px;color:var(--accent);font-weight:600" id="agendaAlertTitle"></span>
+            </div>
+            <div id="agendaAlertList" style="display:flex;flex-direction:column;gap:4px;padding-left:26px"></div>
+          </div>
+        </div>
+
+        <div class="grid-stats">
+          <div class="stat-card c-blue"><div class="stat-header"><div class="stat-icon">👥</div><div class="stat-label">Clientes</div></div><div class="stat-value" id="statClientes">0</div></div>
+          <div class="stat-card c-yellow"><div class="stat-header"><div class="stat-icon">📦</div><div class="stat-label">Produtos</div></div><div class="stat-value" id="statProdutos">0</div></div>
+          <div class="stat-card c-orange" style="--c:var(--orange);--c-dim:var(--orange-dim)"><div class="stat-header"><div class="stat-icon" style="background:var(--orange-dim)">🎯</div><div class="stat-label">Serviços</div></div><div class="stat-value" style="color:var(--orange)" id="statServicos">0</div></div>
+          <div class="stat-card c-purple"><div class="stat-header"><div class="stat-icon">🛒</div><div class="stat-label">Vendas no período</div></div><div class="stat-value" id="statVendas">0</div><div class="stat-sub" id="statVendasSub"></div></div>
+        </div>
+        <!-- Cards financeiros separados -->
+        <div class="fin-cards">
+          <div class="fin-card receita">
+            <div class="fin-card-label">💵 Receita bruta</div>
+            <div class="fin-card-value" id="finReceita">R$ 0,00</div>
+            <div class="fin-card-sub" id="finReceitaSub"></div>
+            <div id="finReceitaComp" class="fin-comp"></div>
+          </div>
+          <div class="fin-card custo">
+            <div class="fin-card-label">📦 Custo total</div>
+            <div class="fin-card-value" id="finCusto">R$ 0,00</div>
+            <div class="fin-card-sub" id="finCustoSub"></div>
+            <div id="finCustoComp" class="fin-comp"></div>
+          </div>
+          <div class="fin-card lucro">
+            <div class="fin-card-label">📈 Lucro líquido</div>
+            <div class="fin-card-value" id="finLucro">R$ 0,00</div>
+            <div id="finMargemBadge"></div>
+            <div id="finLucroComp" class="fin-comp"></div>
+          </div>
+        </div>
+
+        <div class="met-cards">
+          <div class="met-card">
+            <div class="met-card-label">🎫 Ticket médio</div>
+            <div class="met-card-value" id="metTicket">R$ 0,00</div>
+            <div class="met-card-sub" id="metTicketSub"></div>
+          </div>
+          <div class="met-card">
+            <div class="met-card-label">📊 Margem bruta</div>
+            <div class="met-card-value" id="metMargem">0%</div>
+            <div class="met-card-bar"><div class="met-card-bar-fill" id="metMargemBar" style="width:0%;background:var(--green)"></div></div>
+          </div>
+          <div class="met-card">
+            <div class="met-card-label">🔮 Projeção 30 dias</div>
+            <div class="met-card-value" id="metProjecao">R$ 0,00</div>
+            <div class="met-card-sub" id="metProjecaoSub"></div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-panel"><div class="chart-panel-top"><span class="chart-panel-title">📅 Faturamento por dia</span></div><div class="chart-body"><canvas id="chartFaturamento"></canvas></div></div>
+          <div class="chart-panel"><div class="chart-panel-top"><span class="chart-panel-title">🥧 Mix de produtos</span></div><div class="chart-body" style="display:flex;align-items:center;justify-content:center"><canvas id="chartProdutos" style="max-height:180px;max-width:180px"></canvas></div></div>
+        </div>
+        <div class="rank-grid">
+          <div class="rank-panel"><div class="rank-panel-top">🏆 Produtos mais vendidos</div><div class="rank-list" id="rankProdutos"></div></div>
+          <div class="rank-panel"><div class="rank-panel-top">👑 Clientes que mais compram</div><div class="rank-list" id="rankClientes"></div></div>
+        </div>
+        <div class="dash-panel"><div class="panel-top">🕐 Últimas vendas</div><div class="dash-vendas-scroll"><table><thead><tr><th>ID</th><th>Cliente</th><th>Data</th><th>Total</th></tr></thead><tbody id="dashVendasBody"></tbody></table></div></div>
+
+        <!-- Alerta fiado no dashboard -->
+        <div id="fiadoAlert" style="display:none;margin-bottom:12px">
+          <div style="background:var(--orange-dim);border:1px solid var(--orange);border-radius:var(--radius-lg);padding:12px 18px;cursor:pointer" onclick="showPage('fiado',document.querySelector('[data-tip=\"Fiado / A Receber\"]'))">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">📒</span>
+              <span style="font-size:13px;color:var(--orange);font-weight:500" id="fiadoAlertText"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumo de despesas no dashboard -->
+        <div class="dash-panel" style="margin-top:16px" id="dashDespesasPanel">
+          <div class="panel-top" style="display:flex;align-items:center;justify-content:space-between">
+            <span>📋 Resumo de despesas</span>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('despesas',document.querySelector('[data-tip=Despesas]'))" style="font-size:11px">Ver todas →</button>
+          </div>
+          <div id="dashDespesasResumo" style="padding:4px 0"></div>
+        </div>
+
+        <!-- Calendário de vencimentos -->
+        <div class="dash-panel" style="margin-top:16px">
+          <div class="panel-top" style="display:flex;align-items:center;justify-content:space-between">
+            <span>📅 Calendário de vencimentos</span>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('despesas',document.querySelector('[data-tip=Despesas]'))" style="font-size:11px">Ver todas →</button>
+          </div>
+          <div id="dashCalendario" style="padding:4px 0"></div>
+        </div>
+      </div>
+
+      <!-- ══ CLIENTES ══ -->
+      </div>
 
       <!-- Clientes -->
       <div id="page-clientes" class="page">
@@ -191,10 +318,222 @@
       </div>
 
       <!-- Vendas -->
-      <div id="page-vendas" class="page"></div>
+      <div id="page-vendas" class="page">
+        <div class="form-section">
+          <div class="form-title">Registrar venda</div>
+          <!-- Toggle produto vs serviço -->
+          <div class="item-tipo-toggle">
+            <button class="item-tipo-btn active" id="toggleProduto" onclick="setItemTipo('produto')">📦 Produto</button>
+            <button class="item-tipo-btn" id="toggleServico" onclick="setItemTipo('servico')">🎯 Serviço</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Cliente</label>
+              <div class="cliente-search-wrap" id="clienteSearchWrap">
+                <input id="vendaClienteSearch" placeholder="Buscar por nome ou CPF…" autocomplete="off"
+                  oninput="onClienteSearch(this.value)" onfocus="showClienteDropdown()" onblur="hideClienteDropdown()">
+                <div class="cliente-search-dropdown" id="clienteSearchDropdown" style="display:none"></div>
+                <input type="hidden" id="vendaClienteNome">
+              </div>
+            </div>
+            <div class="form-group" id="fgVendaItem">
+              <label id="vendaItemLabel">Produto / Serviço</label>
+              <div class="cliente-search-wrap" id="itemSearchWrap">
+                <input id="vendaItemSearch" placeholder="Buscar produto ou serviço…" autocomplete="off"
+                  oninput="onItemSearch(this.value)" onfocus="showItemDropdown()" onblur="hideItemDropdown()">
+                <div class="cliente-search-dropdown" id="itemSearchDropdown" style="display:none"></div>
+                <input type="hidden" id="vendaItemIdx">
+                <input type="hidden" id="vendaItemTipoHidden">
+              </div>
+            </div>
+            <div class="form-group" id="fgVendaQtd">
+              <label>Quantidade</label>
+              <input id="vendaQtd" type="number" inputmode="numeric" placeholder="1" min="1" step="1">
+            </div>
+            <div class="form-group"><label>Desconto neste item (%)</label><input id="vendaItemDesconto" type="number" inputmode="decimal" placeholder="0" min="0" max="100" step="0.01"></div>
+            <div class="form-group"><label>Data da venda</label><input id="vendaData" type="date"></div>
+            <div class="form-group">
+              <label>Vendedor</label>
+              <select id="vendaVendedor">
+                <option value="">— Nenhum / Não informado —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Forma de pagamento</label>
+              <select id="vendaFormaPgto" onchange="onFormaPgtoChange()">
+                <option value="">— Selecionar —</option>
+                <option value="Dinheiro">💵 Dinheiro</option>
+                <option value="Pix">📲 Pix</option>
+                <option value="Cartão Débito">💳 Cartão Débito</option>
+                <option value="Cartão Crédito">💳 Cartão Crédito</option>
+                <option value="Boleto">📄 Boleto</option>
+                <option value="Fiado">📒 Fiado (a receber)</option>
+                <option value="Parcelado">📅 Parcelado</option>
+                <option value="Sinal">🤝 Sinal + Restante a receber</option>
+                <option value="Outro">🔄 Outro</option>
+              </select>
+            </div>
+            <div class="form-group" id="fgFiadoVenc" style="display:none">
+              <label>Vencimento do fiado <span style="color:var(--red)">*</span></label>
+              <input id="vendaFiadoVenc" type="date">
+            </div>
+            <!-- Campos de Sinal -->
+            <div id="fgSinal" style="display:none;background:var(--surface3);border-radius:var(--radius);padding:14px;margin-top:4px;display:none">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:10px">🤝 Sinal (entrada)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="form-group">
+                  <label>Valor do sinal <span style="color:var(--red)">*</span></label>
+                  <input type="number" id="vendaSinalValor" placeholder="0,00" min="0" step="0.01"
+                    oninput="atualizarRestanteSinal()">
+                </div>
+                <div class="form-group">
+                  <label>Pagamento do sinal</label>
+                  <select id="vendaSinalForma">
+                    <option value="Dinheiro">💵 Dinheiro</option>
+                    <option value="Pix">📲 Pix</option>
+                    <option value="Cartão Débito">💳 Cartão Débito</option>
+                    <option value="Cartão Crédito">💳 Cartão Crédito</option>
+                    <option value="Boleto">📄 Boleto</option>
+                    <option value="Outro">🔄 Outro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Vencimento do restante <span style="color:var(--red)">*</span></label>
+                  <input type="date" id="vendaSinalVenc">
+                </div>
+                <div class="form-group">
+                  <label>Restante a receber</label>
+                  <div id="vendaSinalRestante" style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:var(--accent);padding:8px 0">R$ 0,00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addItemVenda()">＋ Adicionar item</button>
+          <div class="obs-field">
+            <div class="form-group" style="margin-top:12px">
+              <label>Observação da venda</label>
+              <textarea id="vendaNovaObs" placeholder="Ex: Cliente pediu entrega, moldura especial, sem embalagem…" rows="2" style="min-height:58px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrapper" style="margin-bottom:16px">
+          <div class="table-top"><span class="table-heading">Itens da venda</span><span class="table-count" id="cntItens">0</span></div>
+          <table><thead><tr><th>Produto</th><th>Qtd</th><th>Preço unit.</th><th>Custo unit.</th><th>Desconto</th><th>Total item</th><th></th></tr></thead><tbody id="itensVendaBody"></tbody></table>
+        </div>
+        <div class="resumo-box">
+          <div class="resumo-item"><span class="resumo-label">Subtotal</span><span class="resumo-value" id="rSubtotal">R$ 0,00</span></div>
+          <div class="resumo-item"><span class="resumo-label">Descontos</span><span class="resumo-value v-yellow" id="rDesconto">R$ 0,00</span></div>
+          <div class="resumo-item"><span class="resumo-label">Custo total</span><span class="resumo-value v-red" id="rCusto">R$ 0,00</span></div>
+          <div class="resumo-item"><span class="resumo-label">Total</span><span class="resumo-value v-green" id="rTotal">R$ 0,00</span></div>
+          <div class="resumo-item"><span class="resumo-label">Lucro est.</span><span class="resumo-value v-indigo" id="rLucro">R$ 0,00</span></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="finalizarVenda()">✔ Finalizar venda</button>
+          <div id="reciboActions" style="display:none;gap:8px" class="recibo-actions-wrap">
+            <button class="btn btn-ghost btn-sm" onclick="imprimirReciboAtual()">🖨️ Imprimir recibo</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarReciboPDF()">📄 Baixar PDF</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div style="margin-bottom:16px"><div style="font-size:18px;font-weight:600;margin-bottom:4px">Histórico de Vendas</div><div style="font-size:13px;color:var(--text-muted)">Clique em uma linha para ver os detalhes</div></div>
+        <div class="dash-filter-bar" style="margin-bottom:12px">
+          <span class="dash-filter-label">Período:</span>
+          <button class="filter-btn active" onclick="setVendaPeriod('todos',this)">Tudo</button>
+          <button class="filter-btn" onclick="setVendaPeriod('hoje',this)">Hoje</button>
+          <button class="filter-btn" onclick="setVendaPeriod('7',this)">7 dias</button>
+          <button class="filter-btn" onclick="setVendaPeriod('30',this)">30 dias</button>
+          <button class="filter-btn" onclick="setVendaPeriod('mes',this)">Este mês</button>
+          <button class="filter-btn" onclick="setVendaPeriod('custom',this)">📅 Personalizado</button>
+          <div class="date-range-wrap" id="vendaDateRangeWrap">
+            <input type="date" id="vendaFiltDe" onchange="renderVendas()">
+            <span class="date-range-sep">até</span>
+            <input type="date" id="vendaFiltAte" onchange="renderVendas()">
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap"><span class="search-icon">🔍</span><input id="buscaVenda" placeholder="Buscar por ID ou cliente…" oninput="renderVendas()"></div>
+          <div class="sort-group">
+            <button id="sortDataBtn" class="sort-btn active" onclick="setVendaSort('data')">📅 Por data</button>
+            <button id="sortClienteBtn" class="sort-btn" onclick="setVendaSort('cliente')">👤 Por cliente</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Todas as vendas</span><span class="table-count" id="cntVendas">0</span><div class="table-top-actions"><button class="btn btn-ghost btn-sm" onclick="exportarVendasCSV()">⬇ CSV</button><button class="btn btn-ghost btn-sm" onclick="exportarVendasExcel()">📊 Excel</button></div></div>
+          <table><thead><tr><th>ID</th><th>Cliente</th><th>Data</th><th>Pagamento</th><th>Vendedor</th><th>Itens</th><th>Total</th><th>Ações</th></tr></thead><tbody id="vendasBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ CAIXA DIÁRIO ══ -->
+      </div>
 
       <!-- Caixa -->
-      <div id="page-caixa" class="page"></div>
+      <div id="page-caixa" class="page">
+        <div id="caixaStatusCard"></div>
+
+        <!-- Operações (só visível com caixa aberto) -->
+        <div id="caixaOperacoes" style="display:none">
+          <div class="caixa-ops-grid">
+            <div class="form-section" style="margin-bottom:0">
+              <div class="form-title">📤 Sangria (retirada)</div>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+                <div class="form-group"><label>Valor (R$) <span style="color:var(--red)">*</span></label><input id="sangriaValor" type="number" inputmode="decimal" placeholder="0,00" min="0.01" step="0.01"></div>
+                <div class="form-group"><label>Motivo</label><input id="sangriaObs" placeholder="Pagamento, troco…"></div>
+              </div>
+              <button class="btn btn-warning btn-sm" onclick="registrarSangria()">📤 Registrar sangria</button>
+            </div>
+            <div class="form-section" style="margin-bottom:0">
+              <div class="form-title">📥 Aporte (entrada extra)</div>
+              <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+                <div class="form-group"><label>Valor (R$) <span style="color:var(--red)">*</span></label><input id="aporteValor" type="number" inputmode="decimal" placeholder="0,00" min="0.01" step="0.01"></div>
+                <div class="form-group"><label>Motivo</label><input id="aporteObs" placeholder="Troco inicial, fundo…"></div>
+              </div>
+              <button class="btn btn-success btn-sm" onclick="registrarAporte()">📥 Registrar aporte</button>
+            </div>
+          </div>
+
+          <!-- Movimentações do dia -->
+          <div class="table-wrapper" style="margin-bottom:20px">
+            <div class="table-top"><span class="table-heading">📋 Movimentações de hoje</span></div>
+            <div id="caixaMovBody"></div>
+          </div>
+
+          <!-- Fechamento com conferência -->
+          <div class="fechamento-box">
+            <div class="form-title">🔒 Fechar caixa</div>
+            <div class="fechamento-grid">
+              <div class="form-group">
+                <label>Saldo esperado em dinheiro físico</label>
+                <div id="caixaSaldoEsperado" style="padding:9px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--yellow)">R$ 0,00</div>
+                <span style="font-size:11px;color:var(--text-muted);margin-top:3px">Dinheiro + Pix + Aportes − Sangrias + Fundo de abertura</span>
+              </div>
+              <div class="form-group">
+                <label>Valor contado fisicamente (R$)</label>
+                <input id="fechaContado" type="number" inputmode="decimal" placeholder="0,00" min="0" step="0.01" oninput="atualizarDiferenca()">
+              </div>
+              <div class="form-group">
+                <label>Diferença</label>
+                <div id="caixaDiferenca" style="padding:9px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600">—</div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+              <label>Observação de fechamento</label>
+              <input id="fechaObs" placeholder="Opcional">
+            </div>
+            <button class="btn btn-danger" onclick="fecharCaixa()">🔒 Fechar caixa do dia</button>
+          </div>
+        </div>
+
+        <!-- Histórico de caixas -->
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Histórico de caixas</span><span class="table-count" id="cntCaixas">0</span></div>
+          <table><thead><tr><th>Data</th><th>Status</th><th>Fundo abert.</th><th>Vendas</th><th>Aportes</th><th>Sangrias</th><th>Saldo esper.</th><th>Contado</th><th>Dif.</th><th>Ações</th></tr></thead><tbody id="caixasBody"></tbody></table>
+          <div style="padding:10px 18px;font-size:12px;color:var(--text-muted)">💡 Clique em qualquer linha para ver os detalhes do caixa</div>
+        </div>
+      </div>
+
+      <!-- ══ ASSISTENTE IA ══ -->
+      <!-- ══ CONFIGURAÇÕES ══ -->
+      </div>
 
       <!-- Despesas -->
       <div id="page-despesas" class="page">
@@ -222,7 +561,29 @@
       </div>
 
       <!-- Fiado -->
-      <div id="page-fiado" class="page"></div>
+      <div id="page-fiado" class="page">
+        <div class="dash-filter-bar" style="margin-bottom:16px">
+          <span class="dash-filter-label">Filtrar:</span>
+          <button class="filter-btn active" onclick="setFiadoFiltro('pendentes',this)">⏳ Pendentes</button>
+          <button class="filter-btn" onclick="setFiadoFiltro('vencidas',this)">🔴 Vencidas</button>
+          <button class="filter-btn" onclick="setFiadoFiltro('recebidas',this)">✅ Recebidas</button>
+          <button class="filter-btn" onclick="setFiadoFiltro('todas',this)">Todas</button>
+        </div>
+        <div class="grid-stats" style="margin-bottom:20px">
+          <div class="stat-card c-orange" style="--c:var(--orange);--c-dim:var(--orange-dim)"><div class="stat-header"><div class="stat-icon" style="background:var(--orange-dim)">📒</div><div class="stat-label">Em aberto</div></div><div class="stat-value" style="color:var(--orange)" id="fiadoStatAberto">R$0</div></div>
+          <div class="stat-card c-red"><div class="stat-header"><div class="stat-icon">🔴</div><div class="stat-label">Vencido</div></div><div class="stat-value" id="fiadoStatVencido">R$0</div></div>
+          <div class="stat-card c-green"><div class="stat-header"><div class="stat-icon">✅</div><div class="stat-label">Recebido (mês)</div></div><div class="stat-value" id="fiadoStatRecebido">R$0</div></div>
+          <div class="stat-card c-purple"><div class="stat-header"><div class="stat-icon">🛒</div><div class="stat-label">Clientes com fiado</div></div><div class="stat-value" id="fiadoStatClientes">0</div></div>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-top"><span class="table-heading">Contas a receber</span><span class="table-count" id="cntFiado">0</span></div>
+          <table><thead><tr><th>Venda</th><th>Cliente</th><th>Data venda</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="fiadoBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ══ ENTRADA DE ESTOQUE ══ -->
+      </div>
 
       <!-- Fornecedores -->
       <div id="page-fornecedores" class="page">
@@ -237,10 +598,130 @@
       </div>
 
       <!-- Agenda -->
-      <div id="page-agenda" class="page"></div>
+      <div id="page-agenda" class="page">
+
+        <!-- Resumo cards -->
+        <div class="ag-resumo">
+          <div class="ag-res-card" style="border-top:2px solid var(--accent)">
+            <div class="ag-res-label">📅 Hoje</div>
+            <div class="ag-res-val" id="agResHoje" style="color:var(--accent)">0</div>
+          </div>
+          <div class="ag-res-card" style="border-top:2px solid var(--yellow)">
+            <div class="ag-res-label">📆 Esta semana</div>
+            <div class="ag-res-val" id="agResSemana" style="color:var(--yellow)">0</div>
+          </div>
+          <div class="ag-res-card" style="border-top:2px solid var(--red)">
+            <div class="ag-res-label">⏰ Pendentes</div>
+            <div class="ag-res-val" id="agResPendentes" style="color:var(--red)">0</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="ag-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap" id="agendaFiltros">
+            <span class="dash-filter-label">Exibir:</span>
+            <button class="filter-btn active" onclick="setAgendaFiltro('proximos',this)">Próximos</button>
+            <button class="filter-btn" onclick="setAgendaFiltro('hoje',this)">Hoje</button>
+            <button class="filter-btn" onclick="setAgendaFiltro('semana',this)">Esta semana</button>
+            <button class="filter-btn" onclick="setAgendaFiltro('todos',this)">Todos</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="ag-view-btn active" onclick="setAgendaView('lista',this)" id="agBtnLista">☰ Lista</button>
+            <button class="ag-view-btn" onclick="setAgendaView('calendario',this)" id="agBtnCal">📅 Calendário</button>
+            <div style="width:1px;height:20px;background:var(--border2)"></div>
+            <button class="btn btn-ghost btn-sm" onclick="openModalTiposAgenda()" style="font-size:12px;gap:4px">⚙️ Tipos</button>
+            <button class="btn btn-primary btn-sm" onclick="openModalNovoEvento()" style="font-size:12px">＋ Novo evento</button>
+          </div>
+        </div>
+
+        <!-- Lista -->
+        <div id="agendaListaBody"></div>
+
+        <!-- Calendário -->
+        <div id="agendaCalWrap" class="ag-cal-wrap" style="display:none">
+          <div class="ag-cal-nav">
+            <button class="btn btn-ghost btn-sm" onclick="agCalNav(-1)">◀</button>
+            <span class="ag-cal-titulo" id="agCalTitulo"></span>
+            <button class="btn btn-ghost btn-sm" onclick="agCalNav(1)">▶</button>
+          </div>
+          <div class="ag-cal-grid" id="agendaCalHeaders">
+            <div class="ag-cal-header">Dom</div>
+            <div class="ag-cal-header">Seg</div>
+            <div class="ag-cal-header">Ter</div>
+            <div class="ag-cal-header">Qua</div>
+            <div class="ag-cal-header">Qui</div>
+            <div class="ag-cal-header">Sex</div>
+            <div class="ag-cal-header">Sáb</div>
+          </div>
+          <div class="ag-cal-grid" id="agendaCalBody" style="margin-top:4px"></div>
+        </div>
+      </div>
+      </div>
 
       <!-- Relatórios -->
-      <div id="page-relatorios" class="page"></div>
+      <div id="page-relatorios" class="page">
+        <div class="dash-filter-bar" style="margin-bottom:16px">
+          <span class="dash-filter-label">Período:</span>
+          <button class="filter-btn active" onclick="setRelPeriod('7',this)">7 dias</button>
+          <button class="filter-btn" onclick="setRelPeriod('hoje',this)">Hoje</button>
+          <button class="filter-btn" onclick="setRelPeriod('30',this)">30 dias</button>
+          <button class="filter-btn" onclick="setRelPeriod('mes',this)">Este mês</button>
+          <button class="filter-btn" onclick="setRelPeriod('todos',this)">Tudo</button>
+          <button class="filter-btn" onclick="setRelPeriod('custom',this)">📅 Personalizado</button>
+          <div class="date-range-wrap" id="relDateRangeWrap">
+            <input type="date" id="relDateDe" onchange="renderRelatorio()">
+            <span class="date-range-sep">até</span>
+            <input type="date" id="relDateAte" onchange="renderRelatorio()">
+          </div>
+        </div>
+        <!-- Sub-filtro para vendedores -->
+        <div id="vendedorSubFiltro" style="display:none;margin-bottom:12px">
+          <div class="dash-filter-bar">
+            <span class="dash-filter-label">Vendedor:</span>
+            <button class="filter-btn active" id="vendedorFiltroTodos" onclick="setVendedorFiltro('',this)">Todos</button>
+            <div id="vendedorFiltroButtons" style="display:contents"></div>
+          </div>
+        </div>
+        <!-- Sub-filtro visível só para despesas -->
+        <div id="despesasSubFiltro" style="display:none;margin-bottom:12px">
+          <div class="dash-filter-bar">
+            <span class="dash-filter-label">Mostrar:</span>
+            <button class="filter-btn active" onclick="setDespesasSubTipo('periodo',this)">📅 Do período</button>
+            <button class="filter-btn" onclick="setDespesasSubTipo('todas',this)">Todas</button>
+            <button class="filter-btn" onclick="setDespesasSubTipo('abertas',this)">⏳ Em aberto</button>
+            <button class="filter-btn" onclick="setDespesasSubTipo('vencidas',this)">🔴 Vencidas</button>
+            <button class="filter-btn" onclick="setDespesasSubTipo('pagas',this)">✅ Pagas</button>
+          </div>
+        </div>
+        <div class="rel-menu-wrap">
+          <div class="rel-menu-toggle" onclick="toggleRelMenu()" id="relMenuToggle">
+            <span class="rel-menu-toggle-label" id="relMenuLabel">🛒 Vendas</span>
+            <span class="rel-menu-toggle-arrow" id="relMenuArrow">▼</span>
+          </div>
+          <div class="rel-menu-dropdown" id="relMenuDropdown">
+            <button class="rel-tipo-btn active" onclick="setRelTipo('vendas',this)">🛒 Vendas</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('faturamento',this)">💵 Faturamento</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('lucro',this)">📈 Lucro</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('ranking',this)">🏆 Mais Vendidos</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('clientes',this)">👥 Clientes</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('estoque',this)">📦 Estoque</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('despesas_periodo',this)">📋 Despesas</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('compras_forn',this)">📥 Compras Fornec.</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('pagamentos',this)">💳 Pagamentos</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('vendedores_rel',this)">💼 Vendedores</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('dre',this)">📊 DRE</button>
+            <button class="rel-tipo-btn" onclick="setRelTipo('fiado_rel',this)">📒 Fiado</button>
+          </div>
+        </div>
+        <div class="rel-actions">
+            <button class="btn btn-ghost btn-sm" onclick="imprimirRelatorio()">🖨️ Imprimir</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarRelCSV()">⬇ CSV</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportarRelExcel()">📊 Excel</button>
+          </div>
+        <div class="rel-summary" id="relSummary"></div>
+        <div class="table-wrapper"><div class="table-top"><span class="table-heading" id="relTableTitle">Relatório</span><span class="table-count" id="relTableCount">0</span></div><div id="relTableContent"></div></div>
+      </div>
+      </div>
 
       <!-- Vendedores -->
       <div id="page-vendedores" class="page">
@@ -255,10 +736,116 @@
       </div>
 
       <!-- Atalhos -->
-      <div id="page-atalhos" class="page"></div>
+      <div id="page-atalhos" class="page">
+        <div style="max-width:600px">
+          <div style="margin-bottom:20px">
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px">⌨️ Atalhos de teclado</div>
+            <div style="font-size:13px;color:var(--text-muted)">Clique em qualquer tecla para editar o atalho. As alterações são salvas automaticamente.</div>
+          </div>
+
+          <div id="atalhosList" style="display:flex;flex-direction:column;gap:8px"></div>
+
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="resetarAtalhos()">↺ Restaurar padrão</button>
+          </div>
+
+          <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Como usar</div>
+            <div style="font-size:13px;color:var(--text-dim);line-height:1.8">
+              • Atalhos funcionam em qualquer tela do sistema<br>
+              • São desativados automaticamente quando um campo de texto está em foco<br>
+              • Use letras únicas (A–Z) — evite teclas especiais<br>
+              • Teclas duplicadas são rejeitadas automaticamente<br>
+              • <kbd style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px">Esc</kbd> sempre fecha modais — não pode ser editada
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DESPESAS ══ -->
+      </div>
 
       <!-- Config -->
-      <div id="page-config" class="page"></div>
+      <div id="page-config" class="page">
+        <div class="config-section">
+          <div class="config-section-title">🏢 Empresa</div>
+          <div class="config-grid">
+            <div class="form-group">
+              <label>Nome da empresa</label>
+              <input id="cfgEmpresaNome" placeholder="Ex: Estúdio Lumina" oninput="saveConfig()">
+            </div>
+            <div class="form-group">
+              <label>Telefone</label>
+              <input id="cfgEmpresaTel" placeholder="(00) 00000-0000" oninput="saveConfig()">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label>Logo da empresa</label>
+            <div class="logo-upload-wrap">
+              <div class="logo-preview" id="logoPreview">
+                <span class="logo-placeholder">🏢</span>
+              </div>
+              <div>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('logoInput').click()">📁 Escolher imagem</button>
+                <button class="btn btn-ghost btn-sm" onclick="removerLogo()" style="margin-top:6px">✕ Remover logo</button>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:6px">PNG, JPG ou SVG · Máx. 500kb</div>
+              </div>
+              <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">💱 Sistema</div>
+          <div class="config-grid">
+            <div class="form-group">
+              <label>Moeda</label>
+              <select id="cfgMoeda" onchange="saveConfig()">
+                <option value="R$">R$ — Real brasileiro</option>
+                <option value="US$">US$ — Dólar americano</option>
+                <option value="€">€ — Euro</option>
+                <option value="£">£ — Libra esterlina</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Estoque mínimo (alerta abaixo de)</label>
+              <input id="cfgEstoqueMin" type="number" inputmode="numeric" placeholder="3" min="0" step="1" oninput="saveConfig()">
+              <span style="font-size:11px;color:var(--text-muted);margin-top:3px">Padrão: 3 unidades</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">🤖 Assistente IA <span style="font-size:11px;font-weight:400;color:var(--green)">· Powered by Google Gemini (gratuito)</span></div>
+          <div id="iaKeyStatus" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);margin-bottom:14px">
+            <span id="iaKeyStatusDot" style="width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0"></span>
+            <span id="iaKeyStatusTxt" style="font-size:13px;color:var(--text-dim)">Verificando…</span>
+          </div>
+          <div class="form-group">
+            <label>API Key do Google Gemini <span style="font-size:11px;color:var(--accent);font-weight:400">· salva para todos os usuários</span></label>
+            <div style="display:flex;gap:8px">
+              <input id="cfgAnthropicKeyInput" type="password" placeholder="AIza…"
+                style="font-family:'JetBrains Mono',monospace;font-size:12px;flex:1">
+              <button class="btn btn-primary btn-sm" onclick="salvarIaKey()" style="flex-shrink:0;white-space:nowrap">💾 Salvar</button>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted);margin-top:5px;display:block">
+              Obtenha sua chave gratuita em <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/app/apikey</a>
+              · A chave fica no Firestore e funciona para todos os usuários com licença ativa
+            </span>
+          </div>
+        </div>
+
+        <div class="config-section" style="margin-bottom:0">
+          <div class="config-section-title">📣 Alertas de estoque</div>
+          <div id="cfgEstoqueAlertaList" style="display:flex;flex-direction:column;gap:10px"></div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:12px">
+            Produtos abaixo do estoque mínimo configurado acima. Configure o mínimo individualmente por produto editando-os na aba Produtos.
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ VENDEDORES ══ -->
+      </div>
 
     </div><!-- /content -->
   </div><!-- /main -->
