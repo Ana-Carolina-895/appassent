@@ -86,7 +86,7 @@ function renderVendedores(){
 }
 
 /* ══ RELATÓRIO: VENDEDORES ══ */
-let _vendedorFiltroAtivo=''
+
 function _atualizarVendedorFiltroButtons(){
   const container=document.getElementById('vendedorFiltroButtons');if(!container)return
   container.innerHTML=vendedores.map(v=>
