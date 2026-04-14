@@ -18,25 +18,6 @@ let _agendaFiltro = 'proximos'
 let _agendaCalMes = new Date().getMonth()
 let _agendaCalAno = new Date().getFullYear()
 
-/* === ATALHOS === */
-const ATALHOS_DEF = [
-  {id:'nova-venda',   label:'Nova venda',        padrao:'N', fixo:false},
-  {id:'novo-produto', label:'Novo produto',       padrao:'P', fixo:false},
-  {id:'novo-cliente', label:'Novo cliente',       padrao:'C', fixo:false},
-  {id:'novo-servico', label:'Novo serviço',       padrao:'S', fixo:false},
-  {id:'dashboard',    label:'Dashboard',          padrao:'D', fixo:false},
-  {id:'relatorios',   label:'Ir para Relatórios', padrao:'G', fixo:false},
-  {id:'backup',       label:'Baixar backup',      padrao:'B', fixo:false},
-  {id:'fechar',       label:'Fechar modal',       padrao:'Esc',fixo:true},
-]
-
-let _atalhos = (function(){
-  try{
-    const saved = JSON.parse(localStorage.getItem('assent_atalhos')||'{}')
-    return ATALHOS_DEF.map(a=>({...a, tecla: saved[a.id]||a.padrao}))
-  }catch(e){return ATALHOS_DEF.map(a=>({...a,tecla:a.padrao}))}
-})();
-
 function _calcDRE(){
   const pv=vendasRelPeriodo()
   const hj=hoje()
