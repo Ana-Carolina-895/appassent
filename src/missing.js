@@ -418,7 +418,6 @@ function editarVendedorModal(i){
   _vendedorEditando=i
   renderVendedores()
 }
-let _vendedorEditando=null
 
 
 function epHandleFoto(input){
@@ -636,7 +635,6 @@ function getRelTableData(){
 function getTecla(id){return(_atalhos.find(a=>a.id===id)||{}).tecla||''}
 
 // Render da página de atalhos
-let _capturingId = null   // qual atalho está aguardando nova tecla
 
 
 function goToCliente(i){
@@ -1086,7 +1084,6 @@ function renderRelComprasFornecedor(pv,sumEl,titleEl,countEl,contentEl){
 }
 
 /* ══ FIADO / A RECEBER ══ */
-let _fiadoFiltro='pendentes'
 
 
 function renderRelDRE(pv,sumEl,titleEl,countEl,contentEl){
@@ -1667,8 +1664,6 @@ function toggleTheme(){
 })()
 
 /* ══ HISTÓRICO DO CLIENTE ══ */
-let _chClienteNome=''
-let _chPeriod='todos'
 
 
 function tutorialNav(dir){
@@ -1683,7 +1678,6 @@ document.getElementById('modalTutorial')?.addEventListener('click',e=>{
 })
 
 /* ══ CATEGORIAS DE SERVIÇO ══ */
-let servicoCategorias=[]
 
 
 function vendasDoCliente(nome,periodo){
