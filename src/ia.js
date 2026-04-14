@@ -233,5 +233,4 @@ function iaLimparChat(){
 /* ══ INIT ══ */
 
 /* ══ AGENDA ══ */
-let _agendaView='lista',_agendaFiltro='proximos'
-let _agendaCalMes=new Date().getMonth(),_agendaCalAno=new Date().getFullYear()
+// _agendaView/_agendaFiltro/_agendaCalMes/_agendaCalAno declarados em missing.js
